@@ -1,0 +1,893 @@
+basePath: /api/v1
+definitions:
+  github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig:
+    properties:
+      natsAddress:
+        type: string
+    type: object
+  github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig:
+    properties:
+      etcdDialTimeout:
+        $ref: '#/definitions/time.Duration'
+      etcdEndpoints:
+        description: etcd
+        items:
+          type: string
+        type: array
+      etcdOpTimeout:
+        $ref: '#/definitions/time.Duration'
+      httpaddr:
+        description: HTTP
+        type: string
+      httpreadTimeout:
+        $ref: '#/definitions/time.Duration'
+      httpwriteTimeout:
+        $ref: '#/definitions/time.Duration'
+      logLevel:
+        description: Логирование
+        type: string
+    type: object
+  internal_coordinator_http.CreateNodeRequest:
+    properties:
+      address:
+        type: string
+    type: object
+  internal_coordinator_http.CreateRoutingRuleRequest:
+    properties:
+      enabled:
+        type: boolean
+      id:
+        type: string
+      match_type:
+        description: 0=Exact, 1=Prefix, 2=Suffix, 3=Regex
+        type: integer
+      pattern:
+        type: string
+      pusher_id:
+        type: string
+    type: object
+  internal_coordinator_http.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  internal_coordinator_http.GatewayResponse:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      last_heartbeat:
+        type: string
+      registered_at:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_coordinator_http.NodeResponse:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      last_heartbeat:
+        type: string
+      registered_at:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_coordinator_http.PusherResponse:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      last_heartbeat:
+        type: string
+      registered_at:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    type: object
+  internal_coordinator_http.RegisterGatewayRequest:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+    type: object
+  internal_coordinator_http.RegisterPusherRequest:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      type:
+        description: '"http", "kafka", "grpc", "nats"'
+        type: string
+    type: object
+  internal_coordinator_http.RegisterStorageRequest:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      max_delay:
+        description: e.g. "1m", "1h", "0" (unlimited)
+        type: string
+      min_delay:
+        description: e.g. "0s", "1m", "1h"
+        type: string
+    type: object
+  internal_coordinator_http.RoutingRuleResponse:
+    properties:
+      enabled:
+        type: boolean
+      id:
+        type: string
+      match_type:
+        type: integer
+      pattern:
+        type: string
+      pusher_id:
+        type: string
+    type: object
+  internal_coordinator_http.StorageResponse:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      last_heartbeat:
+        type: string
+      max_delay:
+        type: string
+      min_delay:
+        type: string
+      registered_at:
+        type: string
+      status:
+        type: string
+    type: object
+  time.Duration:
+    enum:
+    - -9223372036854775808
+    - 9223372036854775807
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
+    format: int64
+    type: integer
+    x-enum-varnames:
+    - minDuration
+    - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
+host: localhost:8080
+info:
+  contact: {}
+  description: 'API для управления кластером Orbital: регистрация компонентов, правила
+    маршрутизации, конфигурация.'
+  title: Orbital Coordinator API
+  version: "1.0"
+paths:
+  /cluster-config:
+    get:
+      description: Возвращает текущую конфигурацию кластера
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Получить конфигурацию
+      tags:
+      - coordinator.ClusterConfig
+  /coordinator-config:
+    get:
+      description: Возвращает текущую конфигурацию координатора
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Получить конфигурацию
+      tags:
+      - coordinator.CoordinatorConfig
+  /gateways:
+    get:
+      description: Возвращает список всех зарегистрированных Gateways
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_coordinator_http.GatewayResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Список Gateways
+      tags:
+      - Gateways
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует новый Gateway инстанс
+      parameters:
+      - description: Данные Gateway
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_coordinator_http.RegisterGatewayRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.GatewayResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "409":
+          description: Gateway уже существует
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Зарегистрировать Gateway
+      tags:
+      - Gateways
+  /gateways/{gatewayID}:
+    delete:
+      description: Удаляет Gateway из кластера
+      parameters:
+      - description: ID Gateway
+        in: path
+        name: gatewayID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Gateway не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Удалить Gateway
+      tags:
+      - Gateways
+    get:
+      description: Возвращает информацию о Gateway
+      parameters:
+      - description: ID Gateway
+        in: path
+        name: gatewayID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.GatewayResponse'
+        "404":
+          description: Gateway не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Получить Gateway по ID
+      tags:
+      - Gateways
+  /gateways/{gatewayID}/heartbeat:
+    put:
+      description: Обновляет время последнего heartbeat Gateway
+      parameters:
+      - description: ID Gateway
+        in: path
+        name: gatewayID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Gateway не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Обновить heartbeat Gateway
+      tags:
+      - Gateways
+  /health:
+    get:
+      description: Проверка работоспособности сервиса
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - Health
+  /nodes:
+    get:
+      description: Возвращает список всех нод координатора
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_coordinator_http.NodeResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Список нод
+      tags:
+      - Nodes
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует новую ноду координатора в кластере
+      parameters:
+      - description: Данные ноды
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_coordinator_http.CreateNodeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.NodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "409":
+          description: Нода уже существует
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Создать ноду координатора
+      tags:
+      - Nodes
+  /nodes/{nodeID}:
+    delete:
+      description: Удаляет ноду координатора из кластера
+      parameters:
+      - description: ID ноды (UUID)
+        in: path
+        name: nodeID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Невалидный ID
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "404":
+          description: Нода не найдена
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Удалить ноду
+      tags:
+      - Nodes
+    get:
+      description: Возвращает информацию о ноде координатора
+      parameters:
+      - description: ID ноды (UUID)
+        in: path
+        name: nodeID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.NodeResponse'
+        "400":
+          description: Невалидный ID
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "404":
+          description: Нода не найдена
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Получить ноду по ID
+      tags:
+      - Nodes
+  /nodes/{nodeID}/heartbeat:
+    put:
+      description: Обновляет время последнего heartbeat ноды
+      parameters:
+      - description: ID ноды (UUID)
+        in: path
+        name: nodeID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Невалидный ID
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "404":
+          description: Нода не найдена
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Обновить heartbeat ноды
+      tags:
+      - Nodes
+  /pushers:
+    get:
+      description: Возвращает список всех зарегистрированных Pushers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_coordinator_http.PusherResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Список Pushers
+      tags:
+      - Pushers
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует новый Pusher инстанс
+      parameters:
+      - description: Данные Pusher
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_coordinator_http.RegisterPusherRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.PusherResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "409":
+          description: Pusher уже существует
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Зарегистрировать Pusher
+      tags:
+      - Pushers
+  /pushers/{pusherID}:
+    delete:
+      description: Удаляет Pusher из кластера
+      parameters:
+      - description: ID Pusher
+        in: path
+        name: pusherID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Pusher не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Удалить Pusher
+      tags:
+      - Pushers
+    get:
+      description: Возвращает информацию о Pusher
+      parameters:
+      - description: ID Pusher
+        in: path
+        name: pusherID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.PusherResponse'
+        "404":
+          description: Pusher не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Получить Pusher по ID
+      tags:
+      - Pushers
+  /pushers/{pusherID}/heartbeat:
+    put:
+      description: Обновляет время последнего heartbeat Pusher
+      parameters:
+      - description: ID Pusher
+        in: path
+        name: pusherID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Pusher не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Обновить heartbeat Pusher
+      tags:
+      - Pushers
+  /routing-rules:
+    get:
+      description: Возвращает список всех правил маршрутизации
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_coordinator_http.RoutingRuleResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Список правил маршрутизации
+      tags:
+      - RoutingRules
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новое правило маршрутизации сообщений к Pusher
+      parameters:
+      - description: Данные правила
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_coordinator_http.CreateRoutingRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.RoutingRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "409":
+          description: Правило уже существует
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Создать правило маршрутизации
+      tags:
+      - RoutingRules
+  /routing-rules/{ruleID}:
+    delete:
+      description: Удаляет правило маршрутизации
+      parameters:
+      - description: ID правила
+        in: path
+        name: ruleID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Правило не найдено
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Удалить правило маршрутизации
+      tags:
+      - RoutingRules
+    get:
+      description: Возвращает информацию о правиле маршрутизации
+      parameters:
+      - description: ID правила
+        in: path
+        name: ruleID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.RoutingRuleResponse'
+        "404":
+          description: Правило не найдено
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Получить правило по ID
+      tags:
+      - RoutingRules
+    put:
+      consumes:
+      - application/json
+      description: Обновляет существующее правило маршрутизации
+      parameters:
+      - description: ID правила
+        in: path
+        name: ruleID
+        required: true
+        type: string
+      - description: Новые данные правила
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_coordinator_http.CreateRoutingRuleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.RoutingRuleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "404":
+          description: Правило не найдено
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Обновить правило маршрутизации
+      tags:
+      - RoutingRules
+  /storages:
+    get:
+      description: Возвращает список всех зарегистрированных Storages
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_coordinator_http.StorageResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Список Storages
+      tags:
+      - Storages
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует новый Storage инстанс с диапазоном задержек
+      parameters:
+      - description: Данные Storage
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_coordinator_http.RegisterStorageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.StorageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "409":
+          description: Storage уже существует
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Зарегистрировать Storage
+      tags:
+      - Storages
+  /storages/{storageID}:
+    delete:
+      description: Удаляет Storage из кластера
+      parameters:
+      - description: ID Storage
+        in: path
+        name: storageID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Storage не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Удалить Storage
+      tags:
+      - Storages
+    get:
+      description: Возвращает информацию о Storage
+      parameters:
+      - description: ID Storage
+        in: path
+        name: storageID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.StorageResponse'
+        "404":
+          description: Storage не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Получить Storage по ID
+      tags:
+      - Storages
+  /storages/{storageID}/heartbeat:
+    put:
+      description: Обновляет время последнего heartbeat Storage
+      parameters:
+      - description: ID Storage
+        in: path
+        name: storageID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Storage не найден
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+      summary: Обновить heartbeat Storage
+      tags:
+      - Storages
+swagger: "2.0"
+tags:
+- description: Управление нодами координатора
+  name: Nodes
+- description: Регистрация и управление Gateway инстансами
+  name: Gateways
+- description: Регистрация и управление Storage инстансами
+  name: Storages
+- description: Регистрация и управление Pusher инстансами
+  name: Pushers
+- description: Управление правилами маршрутизации
+  name: RoutingRules
+- description: Конфигурации кластера и координатора
+  name: Config

@@ -1,0 +1,1351 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API для управления кластером Orbital: регистрация компонентов, правила маршрутизации, конфигурация.",
+        "title": "Orbital Coordinator API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/cluster-config": {
+            "get": {
+                "description": "Возвращает текущую конфигурацию кластера",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "coordinator.ClusterConfig"
+                ],
+                "summary": "Получить конфигурацию",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/coordinator-config": {
+            "get": {
+                "description": "Возвращает текущую конфигурацию координатора",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "coordinator.CoordinatorConfig"
+                ],
+                "summary": "Получить конфигурацию",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gateways": {
+            "get": {
+                "description": "Возвращает список всех зарегистрированных Gateways",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gateways"
+                ],
+                "summary": "Список Gateways",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_coordinator_http.GatewayResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Регистрирует новый Gateway инстанс",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gateways"
+                ],
+                "summary": "Зарегистрировать Gateway",
+                "parameters": [
+                    {
+                        "description": "Данные Gateway",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.RegisterGatewayRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.GatewayResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Gateway уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gateways/{gatewayID}": {
+            "get": {
+                "description": "Возвращает информацию о Gateway",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gateways"
+                ],
+                "summary": "Получить Gateway по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Gateway",
+                        "name": "gatewayID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.GatewayResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Gateway не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет Gateway из кластера",
+                "tags": [
+                    "Gateways"
+                ],
+                "summary": "Удалить Gateway",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Gateway",
+                        "name": "gatewayID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Gateway не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gateways/{gatewayID}/heartbeat": {
+            "put": {
+                "description": "Обновляет время последнего heartbeat Gateway",
+                "tags": [
+                    "Gateways"
+                ],
+                "summary": "Обновить heartbeat Gateway",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Gateway",
+                        "name": "gatewayID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Gateway не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Проверка работоспособности сервиса",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/nodes": {
+            "get": {
+                "description": "Возвращает список всех нод координатора",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nodes"
+                ],
+                "summary": "Список нод",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_coordinator_http.NodeResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Регистрирует новую ноду координатора в кластере",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nodes"
+                ],
+                "summary": "Создать ноду координатора",
+                "parameters": [
+                    {
+                        "description": "Данные ноды",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.CreateNodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.NodeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Нода уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/nodes/{nodeID}": {
+            "get": {
+                "description": "Возвращает информацию о ноде координатора",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Nodes"
+                ],
+                "summary": "Получить ноду по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID ноды (UUID)",
+                        "name": "nodeID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.NodeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Невалидный ID",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Нода не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет ноду координатора из кластера",
+                "tags": [
+                    "Nodes"
+                ],
+                "summary": "Удалить ноду",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID ноды (UUID)",
+                        "name": "nodeID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Невалидный ID",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Нода не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/nodes/{nodeID}/heartbeat": {
+            "put": {
+                "description": "Обновляет время последнего heartbeat ноды",
+                "tags": [
+                    "Nodes"
+                ],
+                "summary": "Обновить heartbeat ноды",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID ноды (UUID)",
+                        "name": "nodeID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Невалидный ID",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Нода не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pushers": {
+            "get": {
+                "description": "Возвращает список всех зарегистрированных Pushers",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pushers"
+                ],
+                "summary": "Список Pushers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_coordinator_http.PusherResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Регистрирует новый Pusher инстанс",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pushers"
+                ],
+                "summary": "Зарегистрировать Pusher",
+                "parameters": [
+                    {
+                        "description": "Данные Pusher",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.RegisterPusherRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.PusherResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Pusher уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pushers/{pusherID}": {
+            "get": {
+                "description": "Возвращает информацию о Pusher",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pushers"
+                ],
+                "summary": "Получить Pusher по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Pusher",
+                        "name": "pusherID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.PusherResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Pusher не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет Pusher из кластера",
+                "tags": [
+                    "Pushers"
+                ],
+                "summary": "Удалить Pusher",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Pusher",
+                        "name": "pusherID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Pusher не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pushers/{pusherID}/heartbeat": {
+            "put": {
+                "description": "Обновляет время последнего heartbeat Pusher",
+                "tags": [
+                    "Pushers"
+                ],
+                "summary": "Обновить heartbeat Pusher",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Pusher",
+                        "name": "pusherID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Pusher не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/routing-rules": {
+            "get": {
+                "description": "Возвращает список всех правил маршрутизации",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoutingRules"
+                ],
+                "summary": "Список правил маршрутизации",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_coordinator_http.RoutingRuleResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Создаёт новое правило маршрутизации сообщений к Pusher",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoutingRules"
+                ],
+                "summary": "Создать правило маршрутизации",
+                "parameters": [
+                    {
+                        "description": "Данные правила",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.CreateRoutingRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.RoutingRuleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Правило уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/routing-rules/{ruleID}": {
+            "get": {
+                "description": "Возвращает информацию о правиле маршрутизации",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoutingRules"
+                ],
+                "summary": "Получить правило по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID правила",
+                        "name": "ruleID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.RoutingRuleResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Правило не найдено",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Обновляет существующее правило маршрутизации",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RoutingRules"
+                ],
+                "summary": "Обновить правило маршрутизации",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID правила",
+                        "name": "ruleID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новые данные правила",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.CreateRoutingRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.RoutingRuleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Правило не найдено",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет правило маршрутизации",
+                "tags": [
+                    "RoutingRules"
+                ],
+                "summary": "Удалить правило маршрутизации",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID правила",
+                        "name": "ruleID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Правило не найдено",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/storages": {
+            "get": {
+                "description": "Возвращает список всех зарегистрированных Storages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storages"
+                ],
+                "summary": "Список Storages",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_coordinator_http.StorageResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Регистрирует новый Storage инстанс с диапазоном задержек",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storages"
+                ],
+                "summary": "Зарегистрировать Storage",
+                "parameters": [
+                    {
+                        "description": "Данные Storage",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.RegisterStorageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.StorageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Storage уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/storages/{storageID}": {
+            "get": {
+                "description": "Возвращает информацию о Storage",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storages"
+                ],
+                "summary": "Получить Storage по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Storage",
+                        "name": "storageID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.StorageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Storage не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет Storage из кластера",
+                "tags": [
+                    "Storages"
+                ],
+                "summary": "Удалить Storage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Storage",
+                        "name": "storageID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Storage не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/storages/{storageID}/heartbeat": {
+            "put": {
+                "description": "Обновляет время последнего heartbeat Storage",
+                "tags": [
+                    "Storages"
+                ],
+                "summary": "Обновить heartbeat Storage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Storage",
+                        "name": "storageID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Storage не найден",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig": {
+            "type": "object",
+            "properties": {
+                "natsAddress": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig": {
+            "type": "object",
+            "properties": {
+                "etcdDialTimeout": {
+                    "$ref": "#/definitions/time.Duration"
+                },
+                "etcdEndpoints": {
+                    "description": "etcd",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "etcdOpTimeout": {
+                    "$ref": "#/definitions/time.Duration"
+                },
+                "httpaddr": {
+                    "description": "HTTP",
+                    "type": "string"
+                },
+                "httpreadTimeout": {
+                    "$ref": "#/definitions/time.Duration"
+                },
+                "httpwriteTimeout": {
+                    "$ref": "#/definitions/time.Duration"
+                },
+                "logLevel": {
+                    "description": "Логирование",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.CreateNodeRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.CreateRoutingRuleRequest": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "match_type": {
+                    "description": "0=Exact, 1=Prefix, 2=Suffix, 3=Regex",
+                    "type": "integer"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "pusher_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.GatewayResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_heartbeat": {
+                    "type": "string"
+                },
+                "registered_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.NodeResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_heartbeat": {
+                    "type": "string"
+                },
+                "registered_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.PusherResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_heartbeat": {
+                    "type": "string"
+                },
+                "registered_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.RegisterGatewayRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.RegisterPusherRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "\"http\", \"kafka\", \"grpc\", \"nats\"",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.RegisterStorageRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "max_delay": {
+                    "description": "e.g. \"1m\", \"1h\", \"0\" (unlimited)",
+                    "type": "string"
+                },
+                "min_delay": {
+                    "description": "e.g. \"0s\", \"1m\", \"1h\"",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.RoutingRuleResponse": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "match_type": {
+                    "type": "integer"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "pusher_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_coordinator_http.StorageResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_heartbeat": {
+                    "type": "string"
+                },
+                "max_delay": {
+                    "type": "string"
+                },
+                "min_delay": {
+                    "type": "string"
+                },
+                "registered_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "time.Duration": {
+            "type": "integer",
+            "format": "int64",
+            "enum": [
+                -9223372036854775808,
+                9223372036854775807,
+                1,
+                1000,
+                1000000,
+                1000000000,
+                60000000000,
+                3600000000000
+            ],
+            "x-enum-varnames": [
+                "minDuration",
+                "maxDuration",
+                "Nanosecond",
+                "Microsecond",
+                "Millisecond",
+                "Second",
+                "Minute",
+                "Hour"
+            ]
+        }
+    },
+    "tags": [
+        {
+            "description": "Управление нодами координатора",
+            "name": "Nodes"
+        },
+        {
+            "description": "Регистрация и управление Gateway инстансами",
+            "name": "Gateways"
+        },
+        {
+            "description": "Регистрация и управление Storage инстансами",
+            "name": "Storages"
+        },
+        {
+            "description": "Регистрация и управление Pusher инстансами",
+            "name": "Pushers"
+        },
+        {
+            "description": "Управление правилами маршрутизации",
+            "name": "RoutingRules"
+        },
+        {
+            "description": "Конфигурации кластера и координатора",
+            "name": "Config"
+        }
+    ]
+}

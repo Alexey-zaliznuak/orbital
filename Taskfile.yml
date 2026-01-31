@@ -1,0 +1,53 @@
+version: '3'
+
+vars:
+  DOCKER_COMPOSE_FILE: deploy/docker/docker-compose.yml
+
+tasks:
+  start-all:
+    desc: Build and start all services
+    cmds:
+      - task: build-all
+      - task: run-all
+
+  build-all:
+    desc: Build all Docker images
+    deps:
+      - swagger
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILE}} build
+
+  run-all:
+    desc: Start all services (docker-compose up)
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILE}} up
+
+  flush-all:
+    desc: Stop services and remove volumes
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILE}} down -v
+
+  build:
+    desc: Build Go binaries locally
+    cmds:
+      - go build ./...
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  swagger:
+    desc: Generate Swagger documentation
+    cmds:
+      - swag init -g internal/coordinator/http/doc.go -o docs/swagger --parseDependency --parseInternal
+
+  infra-up:
+    desc: Start only infrastructure (nats, etcd)
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILE}} up -d nats etcd
+
+  logs:
+    desc: Show logs from all services
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILE}} logs -f
