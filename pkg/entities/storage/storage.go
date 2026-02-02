@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Alexey-zaliznuak/orbital/pkg/entities"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/message"
 )
 
 // MessageStatus определяет статус сообщения в хранилище.
@@ -24,7 +24,7 @@ const (
 // StoredMessage представляет сообщение в хранилище с дополнительными метаданными.
 type StoredMessage struct {
 	// Message — само сообщение.
-	*entities.Message
+	*message.Message
 	// Status — текущий статус сообщения.
 	Status MessageStatus
 	// Attempts — количество попыток доставки.
@@ -37,7 +37,7 @@ type StoredMessage struct {
 // Каждая реализация (Redis, PostgreSQL, S3) работает со своим диапазоном задержек.
 type MessageStorage interface {
 	// Store сохраняет сообщение в хранилище.
-	Store(ctx context.Context, msg *entities.Message) error
+	Store(ctx context.Context, msg *message.Message) error
 
 	// FetchExpiring возвращает сообщения, у которых ScheduledAt наступает
 	// в пределах threshold от текущего времени.
@@ -68,10 +68,4 @@ type MessageStorage interface {
 
 	// Close закрывает соединение с хранилищем.
 	Close() error
-}
-
-// MessageStorageEvent представляет событие в хранилище сообщений.
-type MessageStorageEvent struct {
-	Type    entities.EventType
-	Message *StoredMessage
 }

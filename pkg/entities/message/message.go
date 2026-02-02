@@ -1,5 +1,4 @@
-// Package entities содержит основные сущности брокера сообщений.
-package entities
+package message
 
 import (
 	"crypto/rand"

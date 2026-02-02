@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Alexey-zaliznuak/orbital/internal/coordinator"
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/config"
 	coordinatorhttp "github.com/Alexey-zaliznuak/orbital/internal/coordinator/http"
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/storage/etcd"
-	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
 
 	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger" // Swagger docs
 )

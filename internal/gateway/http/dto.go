@@ -11,6 +11,28 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+// Message
+
+type NewMessageRequest struct {
+	// ID — уникальный идентификатор сообщения.
+	// Используется для дедупликации, трейсинга и acknowledgment.
+	ID string `json:"id,omitempty"`
+
+	// RoutingKey определяет в какие пушеры попадет сообщение.
+	RoutingKey string `json:"routing_key"`
+
+	// Payload содержит полезную нагрузку сообщения.
+	Payload []byte `json:"payload"`
+	// Metadata содержит дополнительные метаданные сообщения.
+	Metadata map[string]string `json:"metadata,omitempty"`
+
+	// CreatedAt — время создания сообщения.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// ScheduledAt — время, когда сообщение должно быть доставлено.
+	// Если не задано (zero value), сообщение доставляется немедленно.
+	ScheduledAt time.Time `json:"scheduled_at,omitempty"`
+}
+
 // === Nodes ===
 
 type CreateNodeRequest struct {
