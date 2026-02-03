@@ -4,7 +4,10 @@ import (
 	"time"
 
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/pusher"
 	routingrule "github.com/Alexey-zaliznuak/orbital/pkg/entities/routing_rule"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/storage"
 )
 
 type ErrorResponse struct {
@@ -50,7 +53,7 @@ type GatewayResponse struct {
 	LastHeartbeat string `json:"last_heartbeat"`
 }
 
-func gatewayToResponse(g *coordinator.GatewayInfo) GatewayResponse {
+func gatewayToResponse(g *gateway.Info) GatewayResponse {
 	return GatewayResponse{
 		ID:            g.ID,
 		Address:       g.Address,
@@ -79,7 +82,7 @@ type StorageResponse struct {
 	LastHeartbeat string `json:"last_heartbeat"`
 }
 
-func storageToResponse(s *coordinator.StorageInfo) StorageResponse {
+func storageToResponse(s *storage.Info) StorageResponse {
 	maxDelay := s.MaxDelay.String()
 	if s.MaxDelay == 0 {
 		maxDelay = "unlimited"
@@ -112,7 +115,7 @@ type PusherResponse struct {
 	LastHeartbeat string `json:"last_heartbeat"`
 }
 
-func pusherToResponse(p *coordinator.PusherInfo) PusherResponse {
+func pusherToResponse(p *pusher.Info) PusherResponse {
 	return PusherResponse{
 		ID:            p.ID,
 		Type:          p.Type,

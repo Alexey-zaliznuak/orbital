@@ -4,29 +4,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/node"
 	"github.com/google/uuid"
 )
 
-type NodeStatus int
+// NodeStatus — алиас для удобства использования внутри пакета.
+type NodeStatus = node.NodeStatus
 
 const (
-	NodeStatusConnecting NodeStatus = iota
-	NodeStatusActive
-	NodeStatusRemoved
+	NodeStatusConnecting = node.NodeStatusConnecting
+	NodeStatusActive     = node.NodeStatusActive
+	NodeStatusRemoved    = node.NodeStatusRemoved
 )
-
-func (status NodeStatus) String() string {
-	switch status {
-	case NodeStatusConnecting:
-		return "Connecting"
-	case NodeStatusActive:
-		return "Active"
-	case NodeStatusRemoved:
-		return "Removed"
-	default:
-		return "Unknown"
-	}
-}
 
 // Node представляет узел в распределённой системе
 type Node struct {
@@ -87,7 +76,6 @@ func (n *Node) Status() NodeStatus {
 	defer n.mu.RUnlock()
 	return n.status
 }
-
 
 // RegisteredAt возвращает время регистрации ноды
 func (n *Node) RegisteredAt() time.Time {

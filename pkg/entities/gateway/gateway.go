@@ -1,6 +1,20 @@
 package gateway
 
-import "github.com/Alexey-zaliznuak/orbital/pkg/entities/message"
+import (
+	"time"
+
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/message"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/node"
+)
+
+// Info описывает метаданные gateway-узла в системе.
+type Info struct {
+	ID            string
+	Address       string
+	Status        node.NodeStatus
+	RegisteredAt  time.Time
+	LastHeartbeat time.Time
+}
 
 // Gateway — сущность которая принимает сообщения
 // и распределяет их по хранилищам кластера.

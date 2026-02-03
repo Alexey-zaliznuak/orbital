@@ -11,7 +11,11 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/node"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/pusher"
 	routingrule "github.com/Alexey-zaliznuak/orbital/pkg/entities/routing_rule"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/storage"
 )
 
 var (
@@ -166,7 +170,7 @@ func (s *Storage) UpdateNodeHeartbeat(ctx context.Context, nodeID uuid.UUID) err
 	}
 
 	dto.LastHeartbeat = time.Now()
-	dto.Status = int(coordinator.NodeStatusActive)
+	dto.Status = int(node.NodeStatusActive)
 
 	data, err := json.Marshal(dto)
 	if err != nil {
@@ -201,13 +205,13 @@ func (s *Storage) DeleteNode(ctx context.Context, nodeID uuid.UUID) error {
 
 // === Gateways ===
 
-func (s *Storage) RegisterGateway(ctx context.Context, gateway *coordinator.GatewayInfo) error {
+func (s *Storage) RegisterGateway(ctx context.Context, gw *gateway.Info) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	key := keyPrefixGateways + gateway.ID
+	key := keyPrefixGateways + gw.ID
 
-	data, err := json.Marshal(gateway)
+	data, err := json.Marshal(gw)
 	if err != nil {
 		return fmt.Errorf("failed to marshal gateway: %w", err)
 	}
@@ -227,7 +231,7 @@ func (s *Storage) RegisterGateway(ctx context.Context, gateway *coordinator.Gate
 	return nil
 }
 
-func (s *Storage) GetGateway(ctx context.Context, gatewayID string) (*coordinator.GatewayInfo, error) {
+func (s *Storage) GetGateway(ctx context.Context, gatewayID string) (*gateway.Info, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -242,15 +246,15 @@ func (s *Storage) GetGateway(ctx context.Context, gatewayID string) (*coordinato
 		return nil, ErrNotFound
 	}
 
-	var gateway coordinator.GatewayInfo
-	if err := json.Unmarshal(resp.Kvs[0].Value, &gateway); err != nil {
+	var gw gateway.Info
+	if err := json.Unmarshal(resp.Kvs[0].Value, &gw); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal gateway: %w", err)
 	}
 
-	return &gateway, nil
+	return &gw, nil
 }
 
-func (s *Storage) ListGateways(ctx context.Context) ([]*coordinator.GatewayInfo, error) {
+func (s *Storage) ListGateways(ctx context.Context) ([]*gateway.Info, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -259,13 +263,13 @@ func (s *Storage) ListGateways(ctx context.Context) ([]*coordinator.GatewayInfo,
 		return nil, fmt.Errorf("failed to list gateways: %w", err)
 	}
 
-	gateways := make([]*coordinator.GatewayInfo, 0, len(resp.Kvs))
+	gateways := make([]*gateway.Info, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
-		var gateway coordinator.GatewayInfo
-		if err := json.Unmarshal(kv.Value, &gateway); err != nil {
+		var gw gateway.Info
+		if err := json.Unmarshal(kv.Value, &gw); err != nil {
 			continue
 		}
-		gateways = append(gateways, &gateway)
+		gateways = append(gateways, &gw)
 	}
 
 	return gateways, nil
@@ -286,15 +290,15 @@ func (s *Storage) UpdateGatewayHeartbeat(ctx context.Context, gatewayID string) 
 		return ErrNotFound
 	}
 
-	var gateway coordinator.GatewayInfo
-	if err := json.Unmarshal(resp.Kvs[0].Value, &gateway); err != nil {
+	var gw gateway.Info
+	if err := json.Unmarshal(resp.Kvs[0].Value, &gw); err != nil {
 		return fmt.Errorf("failed to unmarshal gateway: %w", err)
 	}
 
-	gateway.LastHeartbeat = time.Now()
-	gateway.Status = coordinator.NodeStatusActive
+	gw.LastHeartbeat = time.Now()
+	gw.Status = node.NodeStatusActive
 
-	data, err := json.Marshal(gateway)
+	data, err := json.Marshal(gw)
 	if err != nil {
 		return fmt.Errorf("failed to marshal gateway: %w", err)
 	}
@@ -323,13 +327,13 @@ func (s *Storage) UnregisterGateway(ctx context.Context, gatewayID string) error
 
 // === Storages ===
 
-func (s *Storage) RegisterStorage(ctx context.Context, storage *coordinator.StorageInfo) error {
+func (s *Storage) RegisterStorage(ctx context.Context, st *storage.Info) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	key := keyPrefixStorages + storage.ID
+	key := keyPrefixStorages + st.ID
 
-	data, err := json.Marshal(storage)
+	data, err := json.Marshal(st)
 	if err != nil {
 		return fmt.Errorf("failed to marshal storage: %w", err)
 	}
@@ -349,7 +353,7 @@ func (s *Storage) RegisterStorage(ctx context.Context, storage *coordinator.Stor
 	return nil
 }
 
-func (s *Storage) GetStorage(ctx context.Context, storageID string) (*coordinator.StorageInfo, error) {
+func (s *Storage) GetStorage(ctx context.Context, storageID string) (*storage.Info, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -364,15 +368,15 @@ func (s *Storage) GetStorage(ctx context.Context, storageID string) (*coordinato
 		return nil, ErrNotFound
 	}
 
-	var storage coordinator.StorageInfo
-	if err := json.Unmarshal(resp.Kvs[0].Value, &storage); err != nil {
+	var st storage.Info
+	if err := json.Unmarshal(resp.Kvs[0].Value, &st); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal storage: %w", err)
 	}
 
-	return &storage, nil
+	return &st, nil
 }
 
-func (s *Storage) ListStorages(ctx context.Context) ([]*coordinator.StorageInfo, error) {
+func (s *Storage) ListStorages(ctx context.Context) ([]*storage.Info, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -381,13 +385,13 @@ func (s *Storage) ListStorages(ctx context.Context) ([]*coordinator.StorageInfo,
 		return nil, fmt.Errorf("failed to list storages: %w", err)
 	}
 
-	storages := make([]*coordinator.StorageInfo, 0, len(resp.Kvs))
+	storages := make([]*storage.Info, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
-		var storage coordinator.StorageInfo
-		if err := json.Unmarshal(kv.Value, &storage); err != nil {
+		var st storage.Info
+		if err := json.Unmarshal(kv.Value, &st); err != nil {
 			continue
 		}
-		storages = append(storages, &storage)
+		storages = append(storages, &st)
 	}
 
 	return storages, nil
@@ -408,15 +412,15 @@ func (s *Storage) UpdateStorageHeartbeat(ctx context.Context, storageID string) 
 		return ErrNotFound
 	}
 
-	var storage coordinator.StorageInfo
-	if err := json.Unmarshal(resp.Kvs[0].Value, &storage); err != nil {
+	var st storage.Info
+	if err := json.Unmarshal(resp.Kvs[0].Value, &st); err != nil {
 		return fmt.Errorf("failed to unmarshal storage: %w", err)
 	}
 
-	storage.LastHeartbeat = time.Now()
-	storage.Status = coordinator.NodeStatusActive
+	st.LastHeartbeat = time.Now()
+	st.Status = node.NodeStatusActive
 
-	data, err := json.Marshal(storage)
+	data, err := json.Marshal(st)
 	if err != nil {
 		return fmt.Errorf("failed to marshal storage: %w", err)
 	}
@@ -445,13 +449,13 @@ func (s *Storage) UnregisterStorage(ctx context.Context, storageID string) error
 
 // === Pushers ===
 
-func (s *Storage) RegisterPusher(ctx context.Context, pusher *coordinator.PusherInfo) error {
+func (s *Storage) RegisterPusher(ctx context.Context, p *pusher.Info) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	key := keyPrefixPushers + pusher.ID
+	key := keyPrefixPushers + p.ID
 
-	data, err := json.Marshal(pusher)
+	data, err := json.Marshal(p)
 	if err != nil {
 		return fmt.Errorf("failed to marshal pusher: %w", err)
 	}
@@ -471,7 +475,7 @@ func (s *Storage) RegisterPusher(ctx context.Context, pusher *coordinator.Pusher
 	return nil
 }
 
-func (s *Storage) GetPusher(ctx context.Context, pusherID string) (*coordinator.PusherInfo, error) {
+func (s *Storage) GetPusher(ctx context.Context, pusherID string) (*pusher.Info, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -486,15 +490,15 @@ func (s *Storage) GetPusher(ctx context.Context, pusherID string) (*coordinator.
 		return nil, ErrNotFound
 	}
 
-	var pusher coordinator.PusherInfo
-	if err := json.Unmarshal(resp.Kvs[0].Value, &pusher); err != nil {
+	var p pusher.Info
+	if err := json.Unmarshal(resp.Kvs[0].Value, &p); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal pusher: %w", err)
 	}
 
-	return &pusher, nil
+	return &p, nil
 }
 
-func (s *Storage) ListPushers(ctx context.Context) ([]*coordinator.PusherInfo, error) {
+func (s *Storage) ListPushers(ctx context.Context) ([]*pusher.Info, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -503,13 +507,13 @@ func (s *Storage) ListPushers(ctx context.Context) ([]*coordinator.PusherInfo, e
 		return nil, fmt.Errorf("failed to list pushers: %w", err)
 	}
 
-	pushers := make([]*coordinator.PusherInfo, 0, len(resp.Kvs))
+	pushers := make([]*pusher.Info, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
-		var pusher coordinator.PusherInfo
-		if err := json.Unmarshal(kv.Value, &pusher); err != nil {
+		var p pusher.Info
+		if err := json.Unmarshal(kv.Value, &p); err != nil {
 			continue
 		}
-		pushers = append(pushers, &pusher)
+		pushers = append(pushers, &p)
 	}
 
 	return pushers, nil
@@ -530,15 +534,15 @@ func (s *Storage) UpdatePusherHeartbeat(ctx context.Context, pusherID string) er
 		return ErrNotFound
 	}
 
-	var pusher coordinator.PusherInfo
-	if err := json.Unmarshal(resp.Kvs[0].Value, &pusher); err != nil {
+	var p pusher.Info
+	if err := json.Unmarshal(resp.Kvs[0].Value, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal pusher: %w", err)
 	}
 
-	pusher.LastHeartbeat = time.Now()
-	pusher.Status = coordinator.NodeStatusActive
+	p.LastHeartbeat = time.Now()
+	p.Status = node.NodeStatusActive
 
-	data, err := json.Marshal(pusher)
+	data, err := json.Marshal(p)
 	if err != nil {
 		return fmt.Errorf("failed to marshal pusher: %w", err)
 	}

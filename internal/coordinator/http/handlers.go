@@ -11,7 +11,11 @@ import (
 
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/storage/etcd"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/node"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/pusher"
 	routingrule "github.com/Alexey-zaliznuak/orbital/pkg/entities/routing_rule"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/storage"
 )
 
 // === Health ===
@@ -226,15 +230,15 @@ func (s *Server) registerGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	gateway := &coordinator.GatewayInfo{
+	gw := &gateway.Info{
 		ID:            req.ID,
 		Address:       req.Address,
-		Status:        coordinator.NodeStatusActive,
+		Status:        node.NodeStatusActive,
 		RegisteredAt:  now,
 		LastHeartbeat: now,
 	}
 
-	if err := s.coordinator.GetStorage().RegisterGateway(r.Context(), gateway); err != nil {
+	if err := s.coordinator.GetStorage().RegisterGateway(r.Context(), gw); err != nil {
 		if errors.Is(err, etcd.ErrAlreadyExists) {
 			s.writeError(w, http.StatusConflict, "gateway already exists")
 			return
@@ -243,7 +247,7 @@ func (s *Server) registerGateway(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, gatewayToResponse(gateway))
+	s.writeJSON(w, http.StatusCreated, gatewayToResponse(gw))
 }
 
 // getGateway godoc
@@ -385,17 +389,17 @@ func (s *Server) registerStorage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	storage := &coordinator.StorageInfo{
+	st := &storage.Info{
 		ID:            req.ID,
 		Address:       req.Address,
 		MinDelay:      minDelay,
 		MaxDelay:      maxDelay,
-		Status:        coordinator.NodeStatusActive,
+		Status:        node.NodeStatusActive,
 		RegisteredAt:  now,
 		LastHeartbeat: now,
 	}
 
-	if err := s.coordinator.GetStorage().RegisterStorage(r.Context(), storage); err != nil {
+	if err := s.coordinator.GetStorage().RegisterStorage(r.Context(), st); err != nil {
 		if errors.Is(err, etcd.ErrAlreadyExists) {
 			s.writeError(w, http.StatusConflict, "storage already exists")
 			return
@@ -404,7 +408,7 @@ func (s *Server) registerStorage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, storageToResponse(storage))
+	s.writeJSON(w, http.StatusCreated, storageToResponse(st))
 }
 
 // getStorage godoc
@@ -531,16 +535,16 @@ func (s *Server) registerPusher(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	pusher := &coordinator.PusherInfo{
+	p := &pusher.Info{
 		ID:            req.ID,
 		Type:          req.Type,
 		Address:       req.Address,
-		Status:        coordinator.NodeStatusActive,
+		Status:        node.NodeStatusActive,
 		RegisteredAt:  now,
 		LastHeartbeat: now,
 	}
 
-	if err := s.coordinator.GetStorage().RegisterPusher(r.Context(), pusher); err != nil {
+	if err := s.coordinator.GetStorage().RegisterPusher(r.Context(), p); err != nil {
 		if errors.Is(err, etcd.ErrAlreadyExists) {
 			s.writeError(w, http.StatusConflict, "pusher already exists")
 			return
@@ -549,7 +553,7 @@ func (s *Server) registerPusher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, pusherToResponse(pusher))
+	s.writeJSON(w, http.StatusCreated, pusherToResponse(p))
 }
 
 // getPusher godoc

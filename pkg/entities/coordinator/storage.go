@@ -2,60 +2,13 @@ package coordinator
 
 import (
 	"context"
-	"time"
 
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/pusher"
 	routingrule "github.com/Alexey-zaliznuak/orbital/pkg/entities/routing_rule"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/storage"
 	"github.com/google/uuid"
 )
-
-type GatewayInfo struct {
-	ID            string
-	Address       string
-	Status        NodeStatus
-	RegisteredAt  time.Time
-	LastHeartbeat time.Time
-}
-
-type StorageInfo struct {
-	ID      string
-	Address string
-
-	// DelayRange определяет диапазон задержек сообщений, которые хранит это хранилище.
-	// Сообщение направляется в это хранилище если:
-	//   MinDelay <= (ScheduledAt - now) < MaxDelay
-	//
-	// Примеры:
-	//   Redis:    MinDelay=0,  MaxDelay=1m   (сообщения с задержкой < 1 мин)
-	//   Postgres: MinDelay=1m, MaxDelay=1h   (от 1 мин до 1 часа)
-	//   S3:       MinDelay=1h, MaxDelay=0    (> 1 часа, 0 = бесконечность)
-	MinDelay time.Duration
-	MaxDelay time.Duration // 0 означает без верхнего ограничения
-
-	Status        NodeStatus
-	RegisteredAt  time.Time
-	LastHeartbeat time.Time
-}
-
-// AcceptsDelay проверяет, принимает ли хранилище сообщения с данной задержкой.
-func (s *StorageInfo) AcceptsDelay(delay time.Duration) bool {
-	if delay < s.MinDelay {
-		return false
-	}
-	// MaxDelay == 0 означает без верхнего ограничения
-	if s.MaxDelay > 0 && delay >= s.MaxDelay {
-		return false
-	}
-	return true
-}
-
-type PusherInfo struct {
-	ID            string
-	Type          string // "http", "kafka", "grpc", "nats"
-	Address       string
-	Status        NodeStatus
-	RegisteredAt  time.Time
-	LastHeartbeat time.Time
-}
 
 type CoordinatorStorage interface {
 	// === Coordinator Nodes ===
@@ -66,23 +19,23 @@ type CoordinatorStorage interface {
 	DeleteNode(ctx context.Context, nodeID uuid.UUID) error
 
 	// === Gateways ===
-	RegisterGateway(ctx context.Context, gateway *GatewayInfo) error
-	GetGateway(ctx context.Context, gatewayID string) (*GatewayInfo, error)
-	ListGateways(ctx context.Context) ([]*GatewayInfo, error)
+	RegisterGateway(ctx context.Context, gw *gateway.Info) error
+	GetGateway(ctx context.Context, gatewayID string) (*gateway.Info, error)
+	ListGateways(ctx context.Context) ([]*gateway.Info, error)
 	UpdateGatewayHeartbeat(ctx context.Context, gatewayID string) error
 	UnregisterGateway(ctx context.Context, gatewayID string) error
 
 	// === Storages ===
-	RegisterStorage(ctx context.Context, storage *StorageInfo) error
-	GetStorage(ctx context.Context, storageID string) (*StorageInfo, error)
-	ListStorages(ctx context.Context) ([]*StorageInfo, error)
+	RegisterStorage(ctx context.Context, st *storage.Info) error
+	GetStorage(ctx context.Context, storageID string) (*storage.Info, error)
+	ListStorages(ctx context.Context) ([]*storage.Info, error)
 	UpdateStorageHeartbeat(ctx context.Context, storageID string) error
 	UnregisterStorage(ctx context.Context, storageID string) error
 
 	// === Pushers ===
-	RegisterPusher(ctx context.Context, pusher *PusherInfo) error
-	GetPusher(ctx context.Context, pusherID string) (*PusherInfo, error)
-	ListPushers(ctx context.Context) ([]*PusherInfo, error)
+	RegisterPusher(ctx context.Context, p *pusher.Info) error
+	GetPusher(ctx context.Context, pusherID string) (*pusher.Info, error)
+	ListPushers(ctx context.Context) ([]*pusher.Info, error)
 	UpdatePusherHeartbeat(ctx context.Context, pusherID string) error
 	UnregisterPusher(ctx context.Context, pusherID string) error
 

@@ -32,8 +32,8 @@ func (b *GatewayConfigBuilder) WithClusterAddress(addr string) *GatewayConfigBui
 func (b *GatewayConfigBuilder) FromEnv() *GatewayConfigBuilder {
 	b.cfg.ClusterAddress = config.GetEnv("CLUSTER_ADDRESS", b.cfg.ClusterAddress)
 
-	b.cfg.HTTPAddr = config.GetEnv("HTTP_PORT", b.cfg.HTTPAddr)
-	b.cfg.GRPCAddr = config.GetEnv("GRPC_PORT", b.cfg.GRPCAddr)
+	b.cfg.HTTPAddr = config.GetEnv("HTTP_ADDR", b.cfg.HTTPAddr)
+	b.cfg.GRPCAddr = config.GetEnv("GRPC_ADDR", b.cfg.GRPCAddr)
 
 	b.cfg.LogLevel = config.GetEnv("LOG_LEVEL", b.cfg.LogLevel)
 

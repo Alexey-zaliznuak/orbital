@@ -7,3 +7,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 ```
+
+периодическое подтягивание конфигов у координатора
+
+общение между компонентами по grpc

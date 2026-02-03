@@ -46,7 +46,6 @@ func (s *Server) getGatewayConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) consumeMessage(w http.ResponseWriter, r *http.Request) {
-	r.Body.Read()
 	// err := s.gateway.Consume(message)
 	s.writeJSON(w, http.StatusOK, s.gateway.GetConfig())
 }
