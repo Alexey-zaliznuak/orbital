@@ -1,3 +1,23 @@
+// Package http предоставляет HTTP API для gateway сервиса.
+//
+// Gateway принимает сообщения от клиентов и распределяет их
+// по storage нодам для последующей доставки.
+//
+// @title			Orbital Gateway API
+// @version			1.0
+// @description		HTTP API для приёма и маршрутизации сообщений
+// @termsOfService	http://swagger.io/terms/
+//
+// @contact.name	API Support
+// @contact.email	support@orbital.io
+//
+// @license.name	MIT
+// @license.url		https://opensource.org/licenses/MIT
+//
+// @host			localhost:8080
+// @BasePath		/
+//
+// @schemes			http https
 package http
 
 import (
@@ -12,17 +32,23 @@ import (
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
 )
 
-// Server представляет HTTP сервер координатора.
+// Server представляет HTTP сервер gateway.
+// Обрабатывает входящие запросы и взаимодействует с gateway для обработки сообщений.
 type Server struct {
 	gateway gateway.Gateway
 	router  *chi.Mux
 	server  *http.Server
 }
 
-// Config конфигурация HTTP сервера.
+// Config содержит конфигурацию HTTP сервера.
 type Config struct {
-	Addr         string
-	ReadTimeout  time.Duration
+	// Addr адрес для прослушивания (например, ":8080").
+	Addr string
+
+	// ReadTimeout максимальное время чтения запроса.
+	ReadTimeout time.Duration
+
+	// WriteTimeout максимальное время записи ответа.
 	WriteTimeout time.Duration
 }
 

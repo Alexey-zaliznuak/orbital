@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"time"
 
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/message"
@@ -22,5 +23,9 @@ type Gateway interface {
 	// Consume принимает сообщение и направляет его в соответствующее хранилище
 	// на основе ScheduledAt или отправляет в пушеры если сообщение готово.
 	Consume(message *message.Message) error
+	// Запускает фоновые задачи:
+	//
+	// - Обновление информации по хранилищам
+	Start(ctx context.Context)
 	GetConfig() *GatewayConfig
 }

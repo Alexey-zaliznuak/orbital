@@ -6,6 +6,5 @@ type GatewayConfig struct {
 	HTTPAddr string
 	GRPCAddr string
 
-	// Логирование
 	LogLevel string
 }
