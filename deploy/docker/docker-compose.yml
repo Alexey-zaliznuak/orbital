@@ -11,6 +11,12 @@ services:
     environment:
       - NATS_URL=nats://nats:4222
       - ETCD_ENDPOINTS=etcd:2379
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     depends_on:
       - nats
       - etcd
@@ -25,14 +31,21 @@ services:
       - COORDINATOR_ADDR=http://coordinator:8080
       - LOG_LEVEL=debug
     depends_on:
+      - coordinator
       - nats
       - etcd
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 
   # NATS JetStream — message bus
   nats:
     image: nats:2.10-alpine
-    command: ["--jetstream", "--store_dir", "/data"]
+    command: ["--jetstream", "-sd", "/data", "-m", "8222"]
     ports:
       - "4222:4222"   # Client connections
       - "8222:8222"   # HTTP monitoring

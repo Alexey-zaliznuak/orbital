@@ -58,27 +58,32 @@
                               └──────────┘    └──────────┘    └──────────┘
 ```
 
+### NATS как универсальный буфер
+
+NATS JetStream используется как буфер **между всеми компонентами** системы.
+Все взаимодействия между сервисами идут через NATS — прямых HTTP-вызовов
+между Gateway, Storage и Pusher нет.
+
 ### NATS Subjects
 
 | Subject | Назначение | Producer | Consumer |
 |---------|------------|----------|----------|
-| `orbital.storage.hot` | Сообщения для Redis (< 1 мин) | Gateway | Redis Storage |
-| `orbital.storage.warm` | Сообщения для Postgres (1 мин - 1 час) | Gateway | Postgres Storage |
-| `orbital.storage.cold` | Сообщения для S3 (> 1 час) | Gateway | S3 Storage |
-| `orbital.promote.hot` | Продвижение в hot tier | Warm/Cold Storage | Redis Storage |
-| `orbital.promote.warm` | Продвижение в warm tier | Cold Storage | Postgres Storage |
+| `orbital.storage.<storage_id>` | Сообщения для конкретного storage | Gateway | Storage |
+| `orbital.promote.<storage_id>` | Продвижение сообщений в storage | Storage (верхний tier) | Storage (нижний tier) |
 | `orbital.ready` | Готовые к отправке сообщения | All Storages | Gateway |
 | `orbital.push.<pusher_id>` | Сообщения для конкретного пушера | Gateway | Pusher |
+
+Subject для storage формируется из ID, который задаётся при регистрации (см. [Именование Storage](#именование-storage)).
 
 ### Поток сообщения
 
 1. **Producer** отправляет сообщение в **Gateway**
-2. **Gateway** определяет tier по `ScheduledAt` и публикует в NATS:
-   - `< 1 мин` → `orbital.storage.hot`
-   - `1 мин - 1 час` → `orbital.storage.warm`
-   - `> 1 час` → `orbital.storage.cold`
+2. **Gateway** определяет storage по `ScheduledAt` (сравнивает с `MinDelay`/`MaxDelay` зарегистрированных storages) и публикует в NATS:
+   - `< 1 мин` → `orbital.storage.hot-l1`
+   - `1 мин - 1 час` → `orbital.storage.warm-l1`
+   - `> 1 час` → `orbital.storage.cold-l1`
 3. **Storage** получает из NATS и сохраняет сообщение
-4. При приближении времени Storage публикует в `orbital.promote.*`
+4. При приближении времени Storage публикует в `orbital.promote.<storage_id>` нижнего tier'а
 5. Когда `ScheduledAt` наступает, Storage публикует в `orbital.ready`
 6. **Gateway** получает из `orbital.ready`, применяет **RoutingRules**
 7. **Gateway** публикует в `orbital.push.<pusher_id>` для каждого совпавшего пушера
@@ -292,19 +297,25 @@ type GatewayInfo struct {
 **StorageInfo:**
 ```go
 type StorageInfo struct {
-    ID       string
+    ID       string          // Человекочитаемый ID (см. Именование Storage)
     Address  string
-    MinDelay time.Duration  // Минимальная задержка
-    MaxDelay time.Duration  // Максимальная задержка (0 = без ограничения)
+    MinDelay time.Duration   // Минимальная задержка
+    MaxDelay time.Duration   // Максимальная задержка (0 = без ограничения)
     Status   NodeStatus
     // ...
 }
 ```
 
-Storage регистрирует диапазон задержек, которые он обслуживает:
-- Redis: `MinDelay=0, MaxDelay=1m` — сообщения с задержкой < 1 мин
-- Postgres: `MinDelay=1m, MaxDelay=1h` — от 1 мин до 1 часа  
-- S3: `MinDelay=1h, MaxDelay=0` — больше 1 часа
+Storage регистрирует диапазон задержек, которые он обслуживает.
+ID используется как часть NATS subject: `orbital.storage.{ID}`.
+
+Пример регистрации:
+
+| ID | Хранилище | MinDelay | MaxDelay | NATS subject |
+|----|-----------|----------|----------|--------------|
+| `hot-l1` | Redis | 0 | 1m | `orbital.storage.hot-l1` |
+| `warm-l1` | PostgreSQL | 1m | 1h | `orbital.storage.warm-l1` |
+| `cold-l1` | S3 | 1h | 0 (unlimited) | `orbital.storage.cold-l1` |
 
 **PusherInfo:**
 ```go
@@ -353,8 +364,6 @@ type Pusher interface {
 
 ## NATS JetStream
 
-NATS JetStream используется как буфер между всеми компонентами системы.
-
 ### Почему NATS
 
 | Преимущество | Для Orbital |
@@ -376,13 +385,13 @@ NATS JetStream используется как буфер между всеми 
 
 ### Consumer Groups
 
-Каждый тип сервиса создаёт свою consumer group:
+Каждый сервис при старте подписывается на свой NATS subject по ID:
 
 ```
 Stream: ORBITAL_STORAGE
-├── Consumer: storage-redis    (filter: orbital.storage.hot)
-├── Consumer: storage-postgres (filter: orbital.storage.warm)
-└── Consumer: storage-s3       (filter: orbital.storage.cold)
+├── Consumer: hot-l1     (filter: orbital.storage.hot-l1)
+├── Consumer: warm-l1    (filter: orbital.storage.warm-l1)
+└── Consumer: cold-l1    (filter: orbital.storage.cold-l1)
 
 Stream: ORBITAL_PUSH
 ├── Consumer: pusher-http-1
@@ -402,8 +411,8 @@ Stream: ORBITAL_PUSH
 ### Пример публикации
 
 ```go
-// Gateway публикует в storage
-js.Publish("orbital.storage.hot", msgData)
+// Gateway публикует в storage по ID
+js.Publish("orbital.storage.hot-l1", msgData)
 
 // Storage публикует готовое сообщение
 js.Publish("orbital.ready", msgData)
@@ -416,15 +425,46 @@ js.Publish("orbital.push.http-webhook-1", msgData)
 
 ## Tiered Storage
 
-| Tier | Хранилище | Задержка | Назначение | Характеристики |
-|------|-----------|----------|------------|----------------|
-| **Hot** | Redis | < 1 мин | Быстрая доставка | Высокая скорость, ограниченная память |
-| **Warm** | PostgreSQL | 1 мин - 1 час | Средняя задержка | Надёжность, SQL-запросы |
-| **Cold** | S3 | > 1 час | Долгое хранение | Дёшево, большой объём |
+Количество уровней хранения **не ограничено**. Каждый storage регистрируется
+в координаторе с уникальным ID и диапазоном задержек. Gateway автоматически
+направляет сообщения в подходящий storage.
+
+### Пример с 3 уровнями
+
+| Tier | ID | Хранилище | Задержка | Характеристики |
+|------|----|-----------|----------|----------------|
+| **Hot** | `hot-l1` | Redis | < 1 мин | Высокая скорость, ограниченная память |
+| **Warm** | `warm-l1` | PostgreSQL | 1 мин - 1 час | Надёжность, SQL-запросы |
+| **Cold** | `cold-l1` | S3 | > 1 час | Дёшево, большой объём |
+
+### Пример с 5 уровнями
+
+| Tier | ID | Хранилище | Задержка |
+|------|----|-----------|----------|
+| **Hot** | `hot-l1` | Redis | < 30с |
+| **Hot** | `hot-l2` | Redis Cluster | 30с - 5 мин |
+| **Warm** | `warm-l1` | PostgreSQL | 5 мин - 1 час |
+| **Warm** | `warm-l2` | PostgreSQL (archive) | 1 час - 24 часа |
+| **Cold** | `cold-l1` | S3 | > 24 часа |
+
+### Именование Storage
+
+Формат ID: **`{tier}-l{level}`**
+
+| Часть | Описание | Примеры |
+|-------|----------|---------|
+| `tier` | Температурный класс хранилища | `hot`, `warm`, `cold` |
+| `l{level}` | Уровень внутри tier'а (1 = ближе к доставке) | `l1`, `l2`, `l3` |
+
+- `hot-l1` — самый быстрый, сообщения вот-вот уйдут
+- `warm-l1` — первый уровень тёплого хранения
+- `cold-l2` — второй уровень холодного хранения (более долгосрочный)
+
+Ограничения: ID должен содержать только строчные латинские буквы, цифры и дефис (`^[a-z0-9][a-z0-9-]*$`), чтобы быть валидным токеном NATS subject.
 
 **Продвижение сообщений:**
 ```
-S3 (cold) ──[осталось < 1 час]──▶ PostgreSQL (warm) ──[осталось < 1 мин]──▶ Redis (hot)
+cold-l1 ──[осталось < 1 час]──▶ warm-l1 ──[осталось < 1 мин]──▶ hot-l1
 ```
 
 ---
@@ -450,6 +490,11 @@ orbital/
 │               └── dto.go            # DTO для сериализации
 │
 ├── pkg/                              # Публичные пакеты
+│   ├── nats/
+│   │   └── client.go                # NATS/JetStream клиент с логированием
+│   ├── sdk/
+│   │   ├── coordinator/client.go    # SDK для координатора
+│   │   └── storage/client.go        # SDK для отправки в storage через NATS
 │   └── entities/
 │       ├── message.go                # Message + опции
 │       ├── gateway.go                # Gateway interface

@@ -22,18 +22,37 @@ const (
 // RoutingRule связывает паттерн с PusherID.
 type RoutingRule struct {
 	// ID — уникальный идентификатор правила.
-	ID string
+	ID string `json:"id"`
 	// Pattern — паттерн для сопоставления с routing key.
-	Pattern string
+	Pattern string `json:"pattern"`
 	// MatchType — тип сопоставления.
-	MatchType MatchType
+	MatchType MatchType `json:"match_type"`
 	// PusherID — идентификатор пушера.
-	PusherID string
+	PusherID string `json:"pusher_id"`
 	// Enabled — активно ли правило.
-	Enabled bool
+	Enabled bool `json:"enabled"`
 	// compiledRegex — скомпилированное регулярное выражение (для MatchRegex).
 	// Не сериализуется, создаётся при загрузке правила.
 	compiledRegex *regexp.Regexp `json:"-"`
+}
+
+// SetCompiledRegex устанавливает скомпилированное регулярное выражение.
+func (r *RoutingRule) SetCompiledRegex(re *regexp.Regexp) {
+	r.compiledRegex = re
+}
+
+// CompileRegex компилирует паттерн как регулярное выражение.
+// Возвращает ошибку если паттерн невалиден.
+func (r *RoutingRule) CompileRegex() error {
+	if r.MatchType != MatchRegex {
+		return nil
+	}
+	compiled, err := regexp.Compile(r.Pattern)
+	if err != nil {
+		return err
+	}
+	r.compiledRegex = compiled
+	return nil
 }
 
 // Match проверяет, соответствует ли routing key паттерну правила.

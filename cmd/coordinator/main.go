@@ -15,7 +15,7 @@ import (
 	coordinatorhttp "github.com/Alexey-zaliznuak/orbital/internal/coordinator/http"
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/storage/etcd"
 
-	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger" // Swagger docs
+	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger-coordinator" // Swagger docs
 )
 
 func main() {

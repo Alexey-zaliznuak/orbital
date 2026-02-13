@@ -1,0 +1,227 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "HTTP API для приёма и маршрутизации сообщений",
+        "title": "Orbital Gateway API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "email": "support@orbital.io"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8081",
+    "basePath": "/",
+    "paths": {
+        "/api/v1/config": {
+            "get": {
+                "description": "Возвращает текущую конфигурацию gateway сервиса",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Получить конфигурацию gateway",
+                "responses": {
+                    "200": {
+                        "description": "Конфигурация gateway",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_gateway.GatewayConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/internal_gateway_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/health": {
+            "get": {
+                "description": "Возвращает статус работоспособности gateway",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Проверка здоровья сервиса",
+                "responses": {
+                    "200": {
+                        "description": "Сервис работает",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/message": {
+            "post": {
+                "description": "Принимает сообщение для последующей доставки через storage ноды",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Отправить сообщение",
+                "parameters": [
+                    {
+                        "description": "Данные сообщения",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_gateway_http.NewMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Сообщение успешно создано",
+                        "schema": {
+                            "$ref": "#/definitions/internal_gateway_http.NewMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/internal_gateway_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/internal_gateway_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_Alexey-zaliznuak_orbital_pkg_entities_gateway.GatewayConfig": {
+            "type": "object",
+            "properties": {
+                "cluster_address": {
+                    "type": "string"
+                },
+                "grpc_addr": {
+                    "type": "string"
+                },
+                "http_addr": {
+                    "type": "string"
+                },
+                "log_level": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_gateway_http.ErrorResponse": {
+            "description": "Стандартный ответ при возникновении ошибки.",
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error содержит описание ошибки.",
+                    "type": "string",
+                    "example": "invalid request body"
+                }
+            }
+        },
+        "internal_gateway_http.NewMessageRequest": {
+            "description": "Запрос для отправки сообщения через gateway.",
+            "type": "object",
+            "required": [
+                "payload",
+                "routing_key"
+            ],
+            "properties": {
+                "metadata": {
+                    "description": "Metadata содержит дополнительные метаданные сообщения.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "priority": "high",
+                        "source": "api"
+                    }
+                },
+                "payload": {
+                    "description": "Payload содержит полезную нагрузку сообщения (base64).",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "routing_key": {
+                    "description": "RoutingKey определяет в какие пушеры попадёт сообщение.",
+                    "type": "string",
+                    "example": "notifications.email"
+                },
+                "scheduled_at": {
+                    "description": "ScheduledAt — время, когда сообщение должно быть доставлено.\nЕсли не задано (zero value), сообщение доставляется немедленно.",
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                }
+            }
+        },
+        "internal_gateway_http.NewMessageResponse": {
+            "description": "Ответ с информацией о созданном сообщении.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID уникальный идентификатор созданного сообщения.",
+                    "type": "string",
+                    "example": "msg_01HQ3K5X7Y8Z9ABC"
+                },
+                "metadata": {
+                    "description": "Metadata содержит дополнительные метаданные сообщения.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "priority": "high",
+                        "source": "api"
+                    }
+                },
+                "payload": {
+                    "description": "Payload содержит полезную нагрузку сообщения (base64).",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "routing_key": {
+                    "description": "RoutingKey определяет в какие пушеры попадёт сообщение.",
+                    "type": "string",
+                    "example": "notifications.email"
+                },
+                "scheduled_at": {
+                    "description": "ScheduledAt — время, когда сообщение должно быть доставлено.",
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                }
+            }
+        }
+    }
+}

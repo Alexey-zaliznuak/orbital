@@ -3,6 +3,9 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+
+	// Используется в swagger-аннотациях.
+	_ "github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
 )
 
 // healthCheck godoc

@@ -1,4 +1,4 @@
-package gateway
+package config
 
 import (
 	"github.com/Alexey-zaliznuak/orbital/pkg/config"
@@ -10,7 +10,7 @@ type GatewayConfigBuilder struct {
 }
 
 // NewBuilder создаёт новый builder с дефолтными значениями.
-func NewClusterConfigBuilder() *GatewayConfigBuilder {
+func NewGatewayConfigBuilder() *GatewayConfigBuilder {
 	builder := &GatewayConfigBuilder{
 		cfg: &gateway.GatewayConfig{
 			ClusterAddress: "",

@@ -18,5 +18,5 @@ type CoordinatorConfig struct {
 }
 
 type ClusterConfig struct {
-	NatsAddress string
+	NatsAddress string `json:"nats_address"`
 }

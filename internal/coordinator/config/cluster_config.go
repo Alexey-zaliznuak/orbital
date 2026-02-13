@@ -28,7 +28,7 @@ func (b *ClusterConfigBuilder) WithNatsAddress(addr string) *ClusterConfigBuilde
 
 // FromEnv загружает конфигурацию из переменных окружения.
 func (b *ClusterConfigBuilder) FromEnv() *ClusterConfigBuilder {
-	b.cfg.NatsAddress = config.GetEnv("NATS_URI", b.cfg.NatsAddress)
+	b.cfg.NatsAddress = config.GetEnv("NATS_URL", config.GetEnv("NATS_URI", b.cfg.NatsAddress))
 
 	return b
 }

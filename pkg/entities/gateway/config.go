@@ -1,10 +1,10 @@
 package gateway
 
 type GatewayConfig struct {
-	ClusterAddress string
+	ClusterAddress string `json:"cluster_address"`
 
-	HTTPAddr string
-	GRPCAddr string
+	HTTPAddr string `json:"http_addr"`
+	GRPCAddr string `json:"grpc_addr"`
 
-	LogLevel string
+	LogLevel string `json:"log_level"`
 }

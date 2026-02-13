@@ -19,8 +19,8 @@ type NewMessageRequest struct {
 	// RoutingKey определяет в какие пушеры попадёт сообщение.
 	RoutingKey string `json:"routing_key" example:"notifications.email" binding:"required"`
 
-	// Payload содержит полезную нагрузку сообщения.
-	Payload []byte `json:"payload" example:"eyJtZXNzYWdlIjogImhlbGxvIn0=" binding:"required"`
+	// Payload содержит полезную нагрузку сообщения (base64).
+	Payload []byte `json:"payload" binding:"required"`
 
 	// Metadata содержит дополнительные метаданные сообщения.
 	Metadata map[string]string `json:"metadata,omitempty" example:"priority:high,source:api"`
@@ -60,8 +60,8 @@ type NewMessageResponse struct {
 	// RoutingKey определяет в какие пушеры попадёт сообщение.
 	RoutingKey string `json:"routing_key" example:"notifications.email"`
 
-	// Payload содержит полезную нагрузку сообщения.
-	Payload []byte `json:"payload" example:"eyJtZXNzYWdlIjogImhlbGxvIn0="`
+	// Payload содержит полезную нагрузку сообщения (base64).
+	Payload []byte `json:"payload"`
 
 	// Metadata содержит дополнительные метаданные сообщения.
 	Metadata map[string]string `json:"metadata,omitempty" example:"priority:high,source:api"`

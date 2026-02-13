@@ -1069,7 +1069,7 @@
         "github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig": {
             "type": "object",
             "properties": {
-                "natsAddress": {
+                "nats_address": {
                     "type": "string"
                 }
             }

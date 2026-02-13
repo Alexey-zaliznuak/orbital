@@ -1,0 +1,159 @@
+basePath: /
+definitions:
+  github_com_Alexey-zaliznuak_orbital_pkg_entities_gateway.GatewayConfig:
+    properties:
+      cluster_address:
+        type: string
+      grpc_addr:
+        type: string
+      http_addr:
+        type: string
+      log_level:
+        type: string
+    type: object
+  internal_gateway_http.ErrorResponse:
+    description: Стандартный ответ при возникновении ошибки.
+    properties:
+      error:
+        description: Error содержит описание ошибки.
+        example: invalid request body
+        type: string
+    type: object
+  internal_gateway_http.NewMessageRequest:
+    description: Запрос для отправки сообщения через gateway.
+    properties:
+      metadata:
+        additionalProperties:
+          type: string
+        description: Metadata содержит дополнительные метаданные сообщения.
+        example:
+          priority: high
+          source: api
+        type: object
+      payload:
+        description: Payload содержит полезную нагрузку сообщения (base64).
+        items:
+          type: integer
+        type: array
+      routing_key:
+        description: RoutingKey определяет в какие пушеры попадёт сообщение.
+        example: notifications.email
+        type: string
+      scheduled_at:
+        description: |-
+          ScheduledAt — время, когда сообщение должно быть доставлено.
+          Если не задано (zero value), сообщение доставляется немедленно.
+        example: "2024-01-15T10:30:00Z"
+        type: string
+    required:
+    - payload
+    - routing_key
+    type: object
+  internal_gateway_http.NewMessageResponse:
+    description: Ответ с информацией о созданном сообщении.
+    properties:
+      id:
+        description: ID уникальный идентификатор созданного сообщения.
+        example: msg_01HQ3K5X7Y8Z9ABC
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        description: Metadata содержит дополнительные метаданные сообщения.
+        example:
+          priority: high
+          source: api
+        type: object
+      payload:
+        description: Payload содержит полезную нагрузку сообщения (base64).
+        items:
+          type: integer
+        type: array
+      routing_key:
+        description: RoutingKey определяет в какие пушеры попадёт сообщение.
+        example: notifications.email
+        type: string
+      scheduled_at:
+        description: ScheduledAt — время, когда сообщение должно быть доставлено.
+        example: "2024-01-15T10:30:00Z"
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: support@orbital.io
+    name: API Support
+  description: HTTP API для приёма и маршрутизации сообщений
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Orbital Gateway API
+  version: "1.0"
+paths:
+  /api/v1/config:
+    get:
+      description: Возвращает текущую конфигурацию gateway сервиса
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Конфигурация gateway
+          schema:
+            $ref: '#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_gateway.GatewayConfig'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/internal_gateway_http.ErrorResponse'
+      summary: Получить конфигурацию gateway
+      tags:
+      - Config
+  /api/v1/health:
+    get:
+      description: Возвращает статус работоспособности gateway
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сервис работает
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Проверка здоровья сервиса
+      tags:
+      - Health
+  /api/v1/message:
+    post:
+      consumes:
+      - application/json
+      description: Принимает сообщение для последующей доставки через storage ноды
+      parameters:
+      - description: Данные сообщения
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_gateway_http.NewMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Сообщение успешно создано
+          schema:
+            $ref: '#/definitions/internal_gateway_http.NewMessageResponse'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/internal_gateway_http.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/internal_gateway_http.ErrorResponse'
+      summary: Отправить сообщение
+      tags:
+      - Messages
+schemes:
+- http
+- https
+swagger: "2.0"

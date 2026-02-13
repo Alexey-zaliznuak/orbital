@@ -2,7 +2,7 @@ basePath: /api/v1
 definitions:
   github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig:
     properties:
-      natsAddress:
+      nats_address:
         type: string
     type: object
   github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig:

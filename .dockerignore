@@ -1,0 +1,15 @@
+# Исключаем всё, что меняется без изменения кода — иначе Docker сбрасывает кэш
+.git
+.cursor
+.vscode
+*.md
+
+# Сборка и артефакты
+deploy
+cmd/scripts
+
+# Временные файлы
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

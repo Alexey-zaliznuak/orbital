@@ -4,11 +4,16 @@ vars:
   DOCKER_COMPOSE_FILE: deploy/docker/docker-compose.yml
 
 tasks:
-  start-all:
+  default:
     desc: Build and start all services
+    deps:
+      - start-all
+
+  start-all:
+    desc: Build (с кэшем) and start all services
     cmds:
       - task: build-all
-      - task: run-all
+      - docker compose -f {{.DOCKER_COMPOSE_FILE}} up
 
   build-all:
     desc: Build all Docker images
@@ -37,10 +42,16 @@ tasks:
     cmds:
       - go test ./...
 
-  swagger:
-    desc: Generate Swagger documentation
+  send-messages:
+    desc: Send messages to gateway
     cmds:
-      - swag init -g internal/coordinator/http/doc.go -o docs/swagger --parseDependency --parseInternal
+      - go run cmd/scripts/send-messages/main.go
+
+  swagger:
+    desc: Generate Swagger documentation for coordinator and gateway
+    cmds:
+      - swag init -g internal/coordinator/http/doc.go -o docs/swagger-coordinator --parseDependency --parseInternal --exclude internal/gateway
+      - swag init -g internal/gateway/http/server.go -o docs/swagger-gateway --parseDependency --parseInternal --exclude internal/coordinator
 
   infra-up:
     desc: Start only infrastructure (nats, etcd)

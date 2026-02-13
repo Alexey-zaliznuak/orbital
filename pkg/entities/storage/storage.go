@@ -10,6 +10,10 @@ import (
 
 // Info описывает метаданные storage-узла в системе.
 type Info struct {
+	// ID — уникальный человекочитаемый идентификатор хранилища.
+	// Используется как часть NATS subject: orbital.storage.{ID}.
+	// Формат: "{tier}-{level}", например "hot-l1", "warm-l1", "cold-l1".
+	// Должен содержать только строчные латинские буквы, цифры и дефис.
 	ID      string
 	Address string
 

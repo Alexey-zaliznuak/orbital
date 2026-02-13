@@ -13,21 +13,21 @@ type MessageOption func(*Message)
 type Message struct {
 	// ID — уникальный идентификатор сообщения.
 	// Используется для дедупликации, трейсинга и acknowledgment.
-	ID string
+	ID string `json:"id"`
 
 	// RoutingKey определяет в какие пушеры попадет сообщение.
-	RoutingKey string
+	RoutingKey string `json:"routing_key"`
 
 	// Payload содержит полезную нагрузку сообщения.
-	Payload []byte
+	Payload []byte `json:"payload"`
 	// Metadata содержит дополнительные метаданные сообщения.
-	Metadata map[string]string
+	Metadata map[string]string `json:"metadata,omitempty"`
 
 	// CreatedAt — время создания сообщения.
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
 	// ScheduledAt — время, когда сообщение должно быть доставлено.
 	// Если не задано (zero value), сообщение доставляется немедленно.
-	ScheduledAt time.Time
+	ScheduledAt time.Time `json:"scheduled_at,omitempty"`
 }
 
 // NewMessage создаёт новое сообщение с применением переданных опций.

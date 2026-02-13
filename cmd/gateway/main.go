@@ -1,4 +1,4 @@
-// Coordinator service — управляет состоянием кластера.
+// Gateway service — принимает сообщения и распределяет их по storage нодам.
 package main
 
 import (
@@ -10,49 +10,40 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Alexey-zaliznuak/orbital/internal/coordinator"
-	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/config"
-	coordinatorhttp "github.com/Alexey-zaliznuak/orbital/internal/coordinator/http"
-	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/storage/etcd"
+	"github.com/Alexey-zaliznuak/orbital/internal/gateway"
+	"github.com/Alexey-zaliznuak/orbital/internal/gateway/config"
+	gatewayhttp "github.com/Alexey-zaliznuak/orbital/internal/gateway/http"
+	"github.com/Alexey-zaliznuak/orbital/pkg/logger"
 
-	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger" // Swagger docs
+	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger-gateway" // Swagger docs
 )
 
 func main() {
 	// Загрузка конфигурации
-	coordinatorConfig := config.NewCoordinatorConfigBuilder().FromEnv().Build()
-	clusterConfig := config.NewClusterConfigBuilder().FromEnv().Build()
+	cfg := config.NewGatewayConfigBuilder().FromEnv().Build()
 
-	log.Printf("Starting coordinator server...")
-	log.Printf("HTTP addr: %s", coordinatorConfig.HTTPAddr)
-	log.Printf("etcd endpoints: %v", coordinatorConfig.EtcdEndpoints)
-	log.Printf("nats address: %s", clusterConfig.NatsAddress)
-
-	// Подключение к etcd
-	storage, err := etcd.New(etcd.Config{
-		Endpoints:   coordinatorConfig.EtcdEndpoints,
-		DialTimeout: coordinatorConfig.EtcdDialTimeout,
-		OpTimeout:   coordinatorConfig.EtcdOpTimeout,
-	})
-	if err != nil {
-		log.Fatalf("Failed to connect to etcd: %v", err)
+	if err := logger.Initialize(cfg.LogLevel); err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
 	}
-	defer storage.Close()
 
-	log.Printf("Connected to etcd")
+	log.Printf("Starting gateway server...")
+	log.Printf("HTTP addr: %s", cfg.HTTPAddr)
+	log.Printf("Cluster address: %s", cfg.ClusterAddress)
 
-	// Создание координатора
+	// Создание gateway
 	ctx := context.Background()
-	coord, err := coordinator.NewBaseCoordinator(ctx, storage, coordinatorConfig, clusterConfig)
+	gw, err := gateway.NewBaseGateway(ctx, cfg)
 	if err != nil {
-		log.Fatalf("Failed to create coordinator: %v", err)
+		log.Fatalf("Failed to create gateway: %v", err)
 	}
+
+	gw.Start(ctx)
 
 	// Создание HTTP сервера
-	server := coordinatorhttp.NewServer(coord, coordinatorhttp.Config{
-		Addr:         coordinatorConfig.HTTPAddr,
-		ReadTimeout:  coordinatorConfig.HTTPReadTimeout,
-		WriteTimeout: coordinatorConfig.HTTPWriteTimeout,
+	server := gatewayhttp.NewServer(gw, gatewayhttp.Config{
+		Addr:         cfg.HTTPAddr,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	})
 
 	// Graceful shutdown
@@ -60,7 +51,7 @@ func main() {
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("HTTP server listening on %s", coordinatorConfig.HTTPAddr)
+		log.Printf("HTTP server listening on %s", cfg.HTTPAddr)
 		if err := server.Start(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("HTTP server error: %v", err)
 		}
@@ -70,12 +61,12 @@ func main() {
 	<-done
 	log.Printf("Shutting down...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
+	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Printf("HTTP server shutdown error: %v", err)
 	}
 
-	log.Printf("Coordinator stopped")
+	log.Printf("Gateway stopped")
 }
