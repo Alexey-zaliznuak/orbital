@@ -1,4 +1,4 @@
-package http
+package gatewayapi
 
 import (
 	"time"
@@ -40,17 +40,6 @@ func (r NewMessageRequest) ToMessage() *message.Message {
 	)
 }
 
-// NewMessageResponseFromMessage создаёт ответ из доменной модели Message.
-func NewMessageResponseFromMessage(m *message.Message) NewMessageResponse {
-	return NewMessageResponse{
-		ID:          m.ID,
-		RoutingKey:  m.RoutingKey,
-		Payload:     m.Payload,
-		Metadata:    m.Metadata,
-		ScheduledAt: m.ScheduledAt,
-	}
-}
-
 // NewMessageResponse представляет ответ после создания сообщения.
 // @Description Ответ с информацией о созданном сообщении.
 type NewMessageResponse struct {
@@ -68,4 +57,15 @@ type NewMessageResponse struct {
 
 	// ScheduledAt — время, когда сообщение должно быть доставлено.
 	ScheduledAt time.Time `json:"scheduled_at,omitempty" example:"2024-01-15T10:30:00Z"`
+}
+
+// NewMessageResponseFromMessage создаёт ответ из доменной модели Message.
+func NewMessageResponseFromMessage(m *message.Message) NewMessageResponse {
+	return NewMessageResponse{
+		ID:          m.ID,
+		RoutingKey:  m.RoutingKey,
+		Payload:     m.Payload,
+		Metadata:    m.Metadata,
+		ScheduledAt: m.ScheduledAt,
+	}
 }

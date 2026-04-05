@@ -4,15 +4,12 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/Alexey-zaliznuak/orbital/internal/gateway"
 	"github.com/Alexey-zaliznuak/orbital/internal/gateway/config"
 	gatewayhttp "github.com/Alexey-zaliznuak/orbital/internal/gateway/http"
+	"github.com/Alexey-zaliznuak/orbital/pkg/httputil"
 	"github.com/Alexey-zaliznuak/orbital/pkg/logger"
 
 	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger-gateway" // Swagger docs
@@ -46,27 +43,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	})
 
-	// Graceful shutdown
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		log.Printf("HTTP server listening on %s", cfg.HTTPAddr)
-		if err := server.Start(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP server error: %v", err)
-		}
-	}()
-
-	// Ожидание сигнала остановки
-	<-done
-	log.Printf("Shutting down...")
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Printf("HTTP server shutdown error: %v", err)
-	}
-
+	log.Printf("HTTP server listening on %s", cfg.HTTPAddr)
+	httputil.Run(server, 10*time.Second)
 	log.Printf("Gateway stopped")
 }

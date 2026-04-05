@@ -15,7 +15,7 @@ import (
 	natsclient "github.com/Alexey-zaliznuak/orbital/pkg/nats"
 	"github.com/Alexey-zaliznuak/orbital/pkg/sdk/coordinator"
 	pusherSdk "github.com/Alexey-zaliznuak/orbital/pkg/sdk/pusher"
-	storageSdk "github.com/Alexey-zaliznuak/orbital/pkg/sdk/storage"
+	storageSdk "github.com/Alexey-zaliznuak/orbital/pkg/sdk/storage/nats"
 	"go.uber.org/zap"
 )
 
@@ -80,7 +80,7 @@ func (g *BaseGateway) sendToPusher(message *message.Message) error {
 	}
 
 	logger.Log.Warn(
-		"No pusher for sending message, dropping",
+		"No pusher for sending message, message will be dropped",
 		zap.String("id", message.ID),
 		zap.String("key", message.RoutingKey),
 	)

@@ -1,23 +1,3 @@
-// Package http предоставляет HTTP API для gateway сервиса.
-//
-// Gateway принимает сообщения от клиентов и распределяет их
-// по storage нодам для последующей доставки.
-//
-// @title			Orbital Gateway API
-// @version			1.0
-// @description		HTTP API для приёма и маршрутизации сообщений
-// @termsOfService	http://swagger.io/terms/
-//
-// @contact.name	API Support
-// @contact.email	support@orbital.io
-//
-// @license.name	MIT
-// @license.url		https://opensource.org/licenses/MIT
-//
-// @host			localhost:8081
-// @BasePath		/
-//
-// @schemes			http https
 package http
 
 import (

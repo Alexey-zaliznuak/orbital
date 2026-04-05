@@ -1,9 +1,9 @@
 package message
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // MessageOption представляет функциональную опцию для конфигурации Message.
@@ -11,30 +11,30 @@ type MessageOption func(*Message)
 
 // Message представляет сообщение в брокере.
 type Message struct {
-	// ID — уникальный идентификатор сообщения.
-	// Используется для дедупликации, трейсинга и acknowledgment.
 	ID string `json:"id"`
 
-	// RoutingKey определяет в какие пушеры попадет сообщение.
+	// Позволяет routing rule определить, в какой pusher отправить сообщение.
 	RoutingKey string `json:"routing_key"`
 
-	// Payload содержит полезную нагрузку сообщения.
-	Payload []byte `json:"payload"`
-	// Metadata содержит дополнительные метаданные сообщения.
-	Metadata map[string]string `json:"metadata,omitempty"`
+	// Может быть использован pusher для дополнительной параметризации.
+	// Example:  http headers, query params, etc.
+	RoutingSettings map[string]string `json:"routing_settings"`
 
-	// CreatedAt — время создания сообщения.
+	Payload []byte `json:"payload"`
+
+	Metadata map[string]string `json:"metadata"`
+
 	CreatedAt time.Time `json:"created_at"`
-	// ScheduledAt — время, когда сообщение должно быть доставлено.
+
 	// Если не задано (zero value), сообщение доставляется немедленно.
-	ScheduledAt time.Time `json:"scheduled_at,omitempty"`
+	ScheduledAt time.Time `json:"scheduled_at"`
 }
 
 // NewMessage создаёт новое сообщение с применением переданных опций.
 // По умолчанию ID генерируется автоматически, CreatedAt устанавливается на текущее время.
 func NewMessage(options ...MessageOption) *Message {
 	message := &Message{
-		ID:        generateID(),
+		ID:        GenerateID(),
 		CreatedAt: time.Now(),
 	}
 
@@ -45,11 +45,15 @@ func NewMessage(options ...MessageOption) *Message {
 	return message
 }
 
-// generateID генерирует уникальный идентификатор.
-func generateID() string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	return hex.EncodeToString(b)
+// GenerateID генерирует временно-упорядоченный идентификатор UUIDv6.
+// Используется как единый стандарт генерации ID во всех слоях системы.
+// При недоступности источника энтропии выполняется fallback на UUIDv4.
+func GenerateID() string {
+	id, err := uuid.NewV6()
+	if err != nil {
+		return uuid.New().String()
+	}
+	return id.String()
 }
 
 // WithID устанавливает идентификатор сообщения.
@@ -64,6 +68,13 @@ func WithID(id string) MessageOption {
 func WithRoutingKey(key string) MessageOption {
 	return func(m *Message) {
 		m.RoutingKey = key
+	}
+}
+
+// WithRoutingSettings устанавливает настройки маршрутизации сообщения.
+func WithRoutingSettings(settings map[string]string) MessageOption {
+	return func(m *Message) {
+		m.RoutingSettings = settings
 	}
 }
 

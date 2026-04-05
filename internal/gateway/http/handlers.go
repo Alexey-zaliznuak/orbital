@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	gatewayapi "github.com/Alexey-zaliznuak/orbital/pkg/gateway/api"
+
 	// Используется в swagger-аннотациях.
 	_ "github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
 )
@@ -29,7 +31,7 @@ func (s *Server) writeJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func (s *Server) writeError(w http.ResponseWriter, status int, msg string) {
-	s.writeJSON(w, status, ErrorResponse{Error: msg})
+	s.writeJSON(w, status, gatewayapi.ErrorResponse{Error: msg})
 }
 
 func (s *Server) decodeJSON(r *http.Request, v any) error {
@@ -60,7 +62,7 @@ func (s *Server) getGatewayConfig(w http.ResponseWriter, r *http.Request) {
 // @Failure		500		{object}	ErrorResponse		"Внутренняя ошибка сервера"
 // @Router		/api/v1/message [post]
 func (s *Server) consumeMessage(w http.ResponseWriter, r *http.Request) {
-	var req NewMessageRequest
+	var req gatewayapi.NewMessageRequest
 	var err error
 
 	if err = s.decodeJSON(r, &req); err != nil {
@@ -75,5 +77,5 @@ func (s *Server) consumeMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, NewMessageResponseFromMessage(msg))
+	s.writeJSON(w, http.StatusCreated, gatewayapi.NewMessageResponseFromMessage(msg))
 }

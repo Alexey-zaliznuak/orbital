@@ -1,15 +1,17 @@
-package http
+package coordinatorapi
 
 import (
 	"time"
 
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/node"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/pusher"
 	routingrule "github.com/Alexey-zaliznuak/orbital/pkg/entities/routing_rule"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/storage"
 )
 
+// ErrorResponse стандартный ответ при ошибке.
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
@@ -28,7 +30,7 @@ type NodeResponse struct {
 	LastHeartbeat string `json:"last_heartbeat"`
 }
 
-func nodeToResponse(n *coordinator.Node) NodeResponse {
+func NodeToResponse(n *coordinator.Node) NodeResponse {
 	return NodeResponse{
 		ID:            n.ID().String(),
 		Address:       n.Address(),
@@ -53,7 +55,7 @@ type GatewayResponse struct {
 	LastHeartbeat string `json:"last_heartbeat"`
 }
 
-func gatewayToResponse(g *gateway.Info) GatewayResponse {
+func GatewayToResponse(g *gateway.Info) GatewayResponse {
 	return GatewayResponse{
 		ID:            g.ID,
 		Address:       g.Address,
@@ -82,7 +84,7 @@ type StorageResponse struct {
 	LastHeartbeat string `json:"last_heartbeat"`
 }
 
-func storageToResponse(s *storage.Info) StorageResponse {
+func StorageToResponse(s *storage.Info) StorageResponse {
 	maxDelay := s.MaxDelay.String()
 	if s.MaxDelay == 0 {
 		maxDelay = "unlimited"
@@ -96,6 +98,40 @@ func storageToResponse(s *storage.Info) StorageResponse {
 		RegisteredAt:  s.RegisteredAt.Format(time.RFC3339),
 		LastHeartbeat: s.LastHeartbeat.Format(time.RFC3339),
 	}
+}
+
+// ParseStorageResponse парсит StorageResponse в доменную модель storage.Info.
+func ParseStorageResponse(r *StorageResponse) (*storage.Info, error) {
+	minDelay, err := time.ParseDuration(r.MinDelay)
+	if err != nil {
+		return nil, err
+	}
+
+	var maxDelay time.Duration
+	if r.MaxDelay != "unlimited" && r.MaxDelay != "" {
+		maxDelay, err = time.ParseDuration(r.MaxDelay)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	registeredAt, _ := time.Parse(time.RFC3339, r.RegisteredAt)
+	lastHeartbeat, _ := time.Parse(time.RFC3339, r.LastHeartbeat)
+
+	status := node.NodeStatusActive
+	if r.Status != "Active" {
+		status = node.NodeStatusRemoved
+	}
+
+	return &storage.Info{
+		ID:            r.ID,
+		Address:       r.Address,
+		MinDelay:      minDelay,
+		MaxDelay:      maxDelay,
+		Status:        status,
+		RegisteredAt:  registeredAt,
+		LastHeartbeat: lastHeartbeat,
+	}, nil
 }
 
 // === Pushers ===
@@ -115,7 +151,7 @@ type PusherResponse struct {
 	LastHeartbeat string `json:"last_heartbeat"`
 }
 
-func pusherToResponse(p *pusher.Info) PusherResponse {
+func PusherToResponse(p *pusher.Info) PusherResponse {
 	return PusherResponse{
 		ID:            p.ID,
 		Type:          p.Type,
@@ -144,7 +180,7 @@ type RoutingRuleResponse struct {
 	Enabled   bool   `json:"enabled"`
 }
 
-func routingRuleToResponse(r *routingrule.RoutingRule) RoutingRuleResponse {
+func RoutingRuleToResponse(r *routingrule.RoutingRule) RoutingRuleResponse {
 	return RoutingRuleResponse{
 		ID:        r.ID,
 		Pattern:   r.Pattern,

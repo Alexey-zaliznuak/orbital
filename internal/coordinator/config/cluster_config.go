@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/Alexey-zaliznuak/orbital/pkg/config"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
+	"github.com/caarlos0/env/v11"
 )
 
 // ClusterConfigBuilder для построения конфигурации.
@@ -10,17 +10,14 @@ type ClusterConfigBuilder struct {
 	cfg *coordinator.ClusterConfig
 }
 
-// NewBuilder создаёт новый builder с дефолтными значениями.
+// NewClusterConfigBuilder создаёт новый builder с дефолтными значениями.
 func NewClusterConfigBuilder() *ClusterConfigBuilder {
-	builder := &ClusterConfigBuilder{
-		cfg: &coordinator.ClusterConfig{
-			NatsAddress: "localhost:4222",
-		},
+	return &ClusterConfigBuilder{
+		cfg: &coordinator.ClusterConfig{},
 	}
-	return builder
 }
 
-// WithHTTPAddr устанавливает адрес HTTP сервера.
+// WithNatsAddress устанавливает адрес NATS сервера.
 func (b *ClusterConfigBuilder) WithNatsAddress(addr string) *ClusterConfigBuilder {
 	b.cfg.NatsAddress = addr
 	return b
@@ -28,8 +25,7 @@ func (b *ClusterConfigBuilder) WithNatsAddress(addr string) *ClusterConfigBuilde
 
 // FromEnv загружает конфигурацию из переменных окружения.
 func (b *ClusterConfigBuilder) FromEnv() *ClusterConfigBuilder {
-	b.cfg.NatsAddress = config.GetEnv("NATS_URL", config.GetEnv("NATS_URI", b.cfg.NatsAddress))
-
+	env.Parse(b.cfg)
 	return b
 }
 

@@ -41,6 +41,26 @@ services:
       retries: 5
       start_period: 5s
 
+  in-memory-storage:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.storage-in-memory
+    ports:
+      - "9090:9090"
+    environment:
+      - IN_MEMORY_STORAGE_ID=in-memory
+      - IN_MEMORY_STORAGE_ADDRESS=http://in-memory-storage:9090
+      - IN_MEMORY_STORAGE_MIN_DELAY=0
+      - IN_MEMORY_STORAGE_MAX_DELAY=0
+    depends_on:
+      - coordinator
+      - nats
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/api/v1/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   # NATS JetStream — message bus
   nats:

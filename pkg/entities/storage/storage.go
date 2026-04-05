@@ -8,11 +8,22 @@ import (
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/node"
 )
 
+type StorageHealth string
+
+const (
+	// Хранилище работает нормально.
+	StorageHealthOK StorageHealth = "ok"
+	// Хранилище недоступно.
+	StorageHealthDisconnect StorageHealth = "disconnect"
+	// Произошла ошибка при проверке состояния хранилища.
+	StorageHealthError StorageHealth = "error"
+)
+
 // Info описывает метаданные storage-узла в системе.
 type Info struct {
 	// ID — уникальный человекочитаемый идентификатор хранилища.
 	// Используется как часть NATS subject: orbital.storage.{ID}.
-	// Формат: "{tier}-{level}", например "hot-l1", "warm-l1", "cold-l1".
+	// Формат: произвольный, предпочтительно "{tier}-{level}", например "hot-l1", "warm-l1", "cold-l1".
 	// Должен содержать только строчные латинские буквы, цифры и дефис.
 	ID      string
 	Address string
@@ -24,7 +35,7 @@ type Info struct {
 	// Примеры:
 	//   Redis:    MinDelay=0,  MaxDelay=1m   (сообщения с задержкой < 1 мин)
 	//   Postgres: MinDelay=1m, MaxDelay=1h   (от 1 мин до 1 часа)
-	//   S3:       MinDelay=1h, MaxDelay=0    (> 1 часа, 0 = бесконечность)
+	//   Kafka:       MinDelay=1h, MaxDelay=0    (> 1 часа, 0 = бесконечность)
 	MinDelay time.Duration
 	MaxDelay time.Duration // 0 означает без верхнего ограничения
 
@@ -45,53 +56,23 @@ func (s *Info) AcceptsDelay(delay time.Duration) bool {
 	return true
 }
 
-// MessageStatus определяет статус сообщения в хранилище.
-type MessageStatus int
-
-const (
-	// MessageStatusPending — сообщение ожидает обработки.
-	MessageStatusPending MessageStatus = iota
-	// MessageStatusInFlight — сообщение в процессе доставки.
-	MessageStatusInFlight
-	// MessageStatusDelivered — сообщение доставлено.
-	MessageStatusDelivered
-	// MessageStatusFailed — доставка не удалась.
-	MessageStatusFailed
-)
-
-// MessageStorage определяет интерфейс хранилища сообщений.
-// Каждая реализация (Redis, PostgreSQL, S3) работает со своим диапазоном задержек.
 type MessageStorage interface {
-	// Store сохраняет сообщение в хранилище.
+	Initialize(ctx context.Context, config any) error
+
+	// -- Required methods --
 	Store(ctx context.Context, msg *message.Message) error
 
-	// FetchExpiring возвращает сообщения, у которых ScheduledAt наступает
-	// в пределах threshold от текущего времени.
-	// Сообщения помечаются как in-flight.
-	FetchExpiring(ctx context.Context, threshold time.Duration, limit int) ([]*message.Message, error)
-
-	// FetchReady возвращает сообщения, готовые к отправке (ScheduledAt <= now).
-	// Сообщения помечаются как in-flight.
 	FetchReady(ctx context.Context, limit int) ([]*message.Message, error)
 
-	// Acknowledge подтверждает успешную обработку сообщения.
-	// Удаляет сообщение из хранилища.
-	Acknowledge(ctx context.Context, msgID string) error
+	Acknowledge(ctx context.Context, msgID []string) error
 
-	// Reject отклоняет сообщение после неудачной обработки.
-	// requeue=true — вернуть в очередь для повторной попытки.
-	// requeue=false — переместить в dead letter queue или удалить.
-	Reject(ctx context.Context, msgID string, requeue bool) error
+	HealthCheck(ctx context.Context) (StorageHealth, error)
 
-	// Get возвращает сообщение по ID.
-	Get(ctx context.Context, msgID string) (*message.Message, error)
+	Connect(ctx context.Context) error
 
-	// Delete удаляет сообщение из хранилища.
-	Delete(ctx context.Context, msgID string) error
+	CloseConnection(ctx context.Context) error
 
-	// Count возвращает количество сообщений в хранилище.
+	// -- Optional methods --
+	GetByID(ctx context.Context, msgID string) (*message.Message, error)
 	Count(ctx context.Context) (int64, error)
-
-	// Close закрывает соединение с хранилищем.
-	Close() error
 }

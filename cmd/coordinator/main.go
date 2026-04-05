@@ -4,18 +4,15 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator"
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/config"
 	coordinatorhttp "github.com/Alexey-zaliznuak/orbital/internal/coordinator/http"
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/storage/etcd"
+	"github.com/Alexey-zaliznuak/orbital/pkg/httputil"
 
-	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger-coordinator" // Swagger docs
+	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger-coordinator"
 )
 
 func main() {
@@ -55,27 +52,7 @@ func main() {
 		WriteTimeout: coordinatorConfig.HTTPWriteTimeout,
 	})
 
-	// Graceful shutdown
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		log.Printf("HTTP server listening on %s", coordinatorConfig.HTTPAddr)
-		if err := server.Start(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP server error: %v", err)
-		}
-	}()
-
-	// Ожидание сигнала остановки
-	<-done
-	log.Printf("Shutting down...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("HTTP server shutdown error: %v", err)
-	}
-
+	log.Printf("HTTP server listening on %s", coordinatorConfig.HTTPAddr)
+	httputil.Run(server, 10*time.Second)
 	log.Printf("Coordinator stopped")
 }

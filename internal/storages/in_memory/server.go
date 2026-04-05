@@ -1,0 +1,89 @@
+package inmemory
+
+import (
+	"context"
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/storage"
+)
+
+// Server представляет HTTP-сервер in-memory хранилища.
+// Предоставляет REST API для взаимодействия с MessageStorage.
+type Server struct {
+	storage storage.MessageStorage
+	router  *chi.Mux
+	server  *http.Server
+}
+
+// ServerConfig содержит конфигурацию HTTP-сервера хранилища.
+type ServerConfig struct {
+	// Addr — адрес для прослушивания (например, ":9090").
+	Addr string
+
+	// ReadTimeout — максимальное время чтения запроса.
+	ReadTimeout time.Duration
+
+	// WriteTimeout — максимальное время записи ответа.
+	WriteTimeout time.Duration
+}
+
+// NewServer создаёт новый HTTP-сервер для in-memory хранилища.
+func NewServer(store storage.MessageStorage, cfg ServerConfig) *Server {
+	s := &Server{
+		storage: store,
+	}
+
+	s.router = s.setupRouter()
+
+	s.server = &http.Server{
+		Addr:         cfg.Addr,
+		Handler:      s.router,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
+	}
+
+	return s
+}
+
+func (s *Server) setupRouter() *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(30 * time.Second))
+
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/health", s.healthCheck)
+
+		r.Route("/messages", func(r chi.Router) {
+			r.Post("/", s.store)
+			r.Get("/ready", s.fetchReady)
+			r.Post("/acknowledge", s.acknowledge)
+			r.Get("/count", s.count)
+			r.Get("/{id}", s.getByID)
+		})
+	})
+
+	return r
+}
+
+// Start запускает HTTP-сервер.
+func (s *Server) Start() error {
+	return s.server.ListenAndServe()
+}
+
+// Shutdown gracefully останавливает сервер.
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.server.Shutdown(ctx)
+}
+
+// Router возвращает chi-роутер (для тестов).
+func (s *Server) Router() *chi.Mux {
+	return s.router
+}

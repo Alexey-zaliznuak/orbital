@@ -3,8 +3,8 @@ package config
 import (
 	"time"
 
-	"github.com/Alexey-zaliznuak/orbital/pkg/config"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
+	"github.com/caarlos0/env/v11"
 )
 
 // CoordinatorConfigBuilder для построения конфигурации.
@@ -12,22 +12,11 @@ type CoordinatorConfigBuilder struct {
 	cfg *coordinator.CoordinatorConfig
 }
 
-// NewBuilder создаёт новый builder с дефолтными значениями.
+// NewCoordinatorConfigBuilder создаёт новый builder с дефолтными значениями.
 func NewCoordinatorConfigBuilder() *CoordinatorConfigBuilder {
-	builder := &CoordinatorConfigBuilder{
-		cfg: &coordinator.CoordinatorConfig{
-			HTTPAddr:         ":8080",
-			HTTPReadTimeout:  15 * time.Second,
-			HTTPWriteTimeout: 15 * time.Second,
-
-			EtcdEndpoints:   []string{"localhost:2379"},
-			EtcdDialTimeout: 5 * time.Second,
-			EtcdOpTimeout:   5 * time.Second,
-
-			LogLevel: "info",
-		},
+	return &CoordinatorConfigBuilder{
+		cfg: &coordinator.CoordinatorConfig{},
 	}
-	return builder
 }
 
 // WithHTTPAddr устанавливает адрес HTTP сервера.
@@ -64,16 +53,7 @@ func (b *CoordinatorConfigBuilder) WithLogLevel(level string) *CoordinatorConfig
 
 // FromEnv загружает конфигурацию из переменных окружения.
 func (b *CoordinatorConfigBuilder) FromEnv() *CoordinatorConfigBuilder {
-	b.cfg.HTTPAddr = config.GetEnv("HTTP_ADDR", b.cfg.HTTPAddr)
-	b.cfg.HTTPReadTimeout = config.GetEnvDuration("HTTP_READ_TIMEOUT", b.cfg.HTTPReadTimeout)
-	b.cfg.HTTPWriteTimeout = config.GetEnvDuration("HTTP_WRITE_TIMEOUT", b.cfg.HTTPWriteTimeout)
-
-	b.cfg.EtcdEndpoints = config.GetEnvSlice("ETCD_ENDPOINTS", ",", b.cfg.EtcdEndpoints)
-	b.cfg.EtcdDialTimeout = config.GetEnvDuration("ETCD_DIAL_TIMEOUT", b.cfg.EtcdDialTimeout)
-	b.cfg.EtcdOpTimeout = config.GetEnvDuration("ETCD_OP_TIMEOUT", b.cfg.EtcdOpTimeout)
-
-	b.cfg.LogLevel = config.GetEnv("LOG_LEVEL", b.cfg.LogLevel)
-
+	env.Parse(b.cfg)
 	return b
 }
 

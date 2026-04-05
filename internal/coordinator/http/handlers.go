@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/storage/etcd"
+	coordinatorapi "github.com/Alexey-zaliznuak/orbital/pkg/coordinator/api"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/node"
@@ -41,7 +42,7 @@ func (s *Server) writeJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func (s *Server) writeError(w http.ResponseWriter, status int, msg string) {
-	s.writeJSON(w, status, ErrorResponse{Error: msg})
+	s.writeJSON(w, status, coordinatorapi.ErrorResponse{Error: msg})
 }
 
 func (s *Server) decodeJSON(r *http.Request, v any) error {
@@ -56,14 +57,14 @@ func (s *Server) decodeJSON(r *http.Request, v any) error {
 // @Tags		Nodes
 // @Accept		json
 // @Produce		json
-// @Param		request	body		CreateNodeRequest	true	"Данные ноды"
-// @Success		201		{object}	NodeResponse
-// @Failure		400		{object}	ErrorResponse
-// @Failure		409		{object}	ErrorResponse	"Нода уже существует"
-// @Failure		500		{object}	ErrorResponse
+// @Param		request	body		coordinatorapi.CreateNodeRequest	true	"Данные ноды"
+// @Success		201		{object}	coordinatorapi.NodeResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse
+// @Failure		409		{object}	coordinatorapi.ErrorResponse	"Нода уже существует"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/nodes [post]
 func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
-	var req CreateNodeRequest
+	var req coordinatorapi.CreateNodeRequest
 	if err := s.decodeJSON(r, &req); err != nil {
 		s.writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -85,7 +86,7 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, nodeToResponse(node))
+	s.writeJSON(w, http.StatusCreated, coordinatorapi.NodeToResponse(node))
 }
 
 // getNode godoc
@@ -94,10 +95,10 @@ func (s *Server) createNode(w http.ResponseWriter, r *http.Request) {
 // @Tags		Nodes
 // @Produce		json
 // @Param		nodeID	path		string	true	"ID ноды (UUID)"
-// @Success		200		{object}	NodeResponse
-// @Failure		400		{object}	ErrorResponse	"Невалидный ID"
-// @Failure		404		{object}	ErrorResponse	"Нода не найдена"
-// @Failure		500		{object}	ErrorResponse
+// @Success		200		{object}	coordinatorapi.NodeResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse	"Невалидный ID"
+// @Failure		404		{object}	coordinatorapi.ErrorResponse	"Нода не найдена"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/nodes/{nodeID} [get]
 func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 	nodeIDStr := chi.URLParam(r, "nodeID")
@@ -117,7 +118,7 @@ func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusOK, nodeToResponse(node))
+	s.writeJSON(w, http.StatusOK, coordinatorapi.NodeToResponse(node))
 }
 
 // listNodes godoc
@@ -125,8 +126,8 @@ func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
 // @Description	Возвращает список всех нод координатора
 // @Tags		Nodes
 // @Produce		json
-// @Success		200	{array}		NodeResponse
-// @Failure		500	{object}	ErrorResponse
+// @Success		200	{array}		coordinatorapi.NodeResponse
+// @Failure		500	{object}	coordinatorapi.ErrorResponse
 // @Router		/nodes [get]
 func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
 	nodes, err := s.coordinator.GetStorage().ListNodes(r.Context())
@@ -135,9 +136,9 @@ func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := make([]NodeResponse, len(nodes))
+	resp := make([]coordinatorapi.NodeResponse, len(nodes))
 	for i, n := range nodes {
-		resp[i] = nodeToResponse(n)
+		resp[i] = coordinatorapi.NodeToResponse(n)
 	}
 
 	s.writeJSON(w, http.StatusOK, resp)
@@ -149,9 +150,9 @@ func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
 // @Tags		Nodes
 // @Param		nodeID	path	string	true	"ID ноды (UUID)"
 // @Success		204		"No Content"
-// @Failure		400		{object}	ErrorResponse	"Невалидный ID"
-// @Failure		404		{object}	ErrorResponse	"Нода не найдена"
-// @Failure		500		{object}	ErrorResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse	"Невалидный ID"
+// @Failure		404		{object}	coordinatorapi.ErrorResponse	"Нода не найдена"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/nodes/{nodeID}/heartbeat [put]
 func (s *Server) updateNodeHeartbeat(w http.ResponseWriter, r *http.Request) {
 	nodeIDStr := chi.URLParam(r, "nodeID")
@@ -179,9 +180,9 @@ func (s *Server) updateNodeHeartbeat(w http.ResponseWriter, r *http.Request) {
 // @Tags		Nodes
 // @Param		nodeID	path	string	true	"ID ноды (UUID)"
 // @Success		204		"No Content"
-// @Failure		400		{object}	ErrorResponse	"Невалидный ID"
-// @Failure		404		{object}	ErrorResponse	"Нода не найдена"
-// @Failure		500		{object}	ErrorResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse	"Невалидный ID"
+// @Failure		404		{object}	coordinatorapi.ErrorResponse	"Нода не найдена"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/nodes/{nodeID} [delete]
 func (s *Server) deleteNode(w http.ResponseWriter, r *http.Request) {
 	nodeIDStr := chi.URLParam(r, "nodeID")
@@ -211,14 +212,14 @@ func (s *Server) deleteNode(w http.ResponseWriter, r *http.Request) {
 // @Tags		Gateways
 // @Accept		json
 // @Produce		json
-// @Param		request	body		RegisterGatewayRequest	true	"Данные Gateway"
-// @Success		201		{object}	GatewayResponse
-// @Failure		400		{object}	ErrorResponse
-// @Failure		409		{object}	ErrorResponse	"Gateway уже существует"
-// @Failure		500		{object}	ErrorResponse
+// @Param		request	body		coordinatorapi.RegisterGatewayRequest	true	"Данные Gateway"
+// @Success		201		{object}	coordinatorapi.GatewayResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse
+// @Failure		409		{object}	coordinatorapi.ErrorResponse	"Gateway уже существует"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/gateways [post]
 func (s *Server) registerGateway(w http.ResponseWriter, r *http.Request) {
-	var req RegisterGatewayRequest
+	var req coordinatorapi.RegisterGatewayRequest
 	if err := s.decodeJSON(r, &req); err != nil {
 		s.writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -247,7 +248,7 @@ func (s *Server) registerGateway(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, gatewayToResponse(gw))
+	s.writeJSON(w, http.StatusCreated, coordinatorapi.GatewayToResponse(gw))
 }
 
 // getGateway godoc
@@ -256,9 +257,9 @@ func (s *Server) registerGateway(w http.ResponseWriter, r *http.Request) {
 // @Tags		Gateways
 // @Produce		json
 // @Param		gatewayID	path		string	true	"ID Gateway"
-// @Success		200			{object}	GatewayResponse
-// @Failure		404			{object}	ErrorResponse	"Gateway не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Success		200			{object}	coordinatorapi.GatewayResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Gateway не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/gateways/{gatewayID} [get]
 func (s *Server) getGateway(w http.ResponseWriter, r *http.Request) {
 	gatewayID := chi.URLParam(r, "gatewayID")
@@ -273,7 +274,7 @@ func (s *Server) getGateway(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusOK, gatewayToResponse(gateway))
+	s.writeJSON(w, http.StatusOK, coordinatorapi.GatewayToResponse(gateway))
 }
 
 // listGateways godoc
@@ -281,8 +282,8 @@ func (s *Server) getGateway(w http.ResponseWriter, r *http.Request) {
 // @Description	Возвращает список всех зарегистрированных Gateways
 // @Tags		Gateways
 // @Produce		json
-// @Success		200	{array}		GatewayResponse
-// @Failure		500	{object}	ErrorResponse
+// @Success		200	{array}		coordinatorapi.GatewayResponse
+// @Failure		500	{object}	coordinatorapi.ErrorResponse
 // @Router		/gateways [get]
 func (s *Server) listGateways(w http.ResponseWriter, r *http.Request) {
 	gateways, err := s.coordinator.GetStorage().ListGateways(r.Context())
@@ -291,9 +292,9 @@ func (s *Server) listGateways(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := make([]GatewayResponse, len(gateways))
+	resp := make([]coordinatorapi.GatewayResponse, len(gateways))
 	for i, g := range gateways {
-		resp[i] = gatewayToResponse(g)
+		resp[i] = coordinatorapi.GatewayToResponse(g)
 	}
 
 	s.writeJSON(w, http.StatusOK, resp)
@@ -305,8 +306,8 @@ func (s *Server) listGateways(w http.ResponseWriter, r *http.Request) {
 // @Tags		Gateways
 // @Param		gatewayID	path	string	true	"ID Gateway"
 // @Success		204			"No Content"
-// @Failure		404			{object}	ErrorResponse	"Gateway не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Gateway не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/gateways/{gatewayID}/heartbeat [put]
 func (s *Server) updateGatewayHeartbeat(w http.ResponseWriter, r *http.Request) {
 	gatewayID := chi.URLParam(r, "gatewayID")
@@ -329,8 +330,8 @@ func (s *Server) updateGatewayHeartbeat(w http.ResponseWriter, r *http.Request) 
 // @Tags		Gateways
 // @Param		gatewayID	path	string	true	"ID Gateway"
 // @Success		204			"No Content"
-// @Failure		404			{object}	ErrorResponse	"Gateway не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Gateway не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/gateways/{gatewayID} [delete]
 func (s *Server) unregisterGateway(w http.ResponseWriter, r *http.Request) {
 	gatewayID := chi.URLParam(r, "gatewayID")
@@ -355,14 +356,14 @@ func (s *Server) unregisterGateway(w http.ResponseWriter, r *http.Request) {
 // @Tags		Storages
 // @Accept		json
 // @Produce		json
-// @Param		request	body		RegisterStorageRequest	true	"Данные Storage"
-// @Success		201		{object}	StorageResponse
-// @Failure		400		{object}	ErrorResponse
-// @Failure		409		{object}	ErrorResponse	"Storage уже существует"
-// @Failure		500		{object}	ErrorResponse
+// @Param		request	body		coordinatorapi.RegisterStorageRequest	true	"Данные Storage"
+// @Success		201		{object}	coordinatorapi.StorageResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse
+// @Failure		409		{object}	coordinatorapi.ErrorResponse	"Storage уже существует"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/storages [post]
 func (s *Server) registerStorage(w http.ResponseWriter, r *http.Request) {
-	var req RegisterStorageRequest
+	var req coordinatorapi.RegisterStorageRequest
 	if err := s.decodeJSON(r, &req); err != nil {
 		s.writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -408,7 +409,7 @@ func (s *Server) registerStorage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, storageToResponse(st))
+	s.writeJSON(w, http.StatusCreated, coordinatorapi.StorageToResponse(st))
 }
 
 // getStorage godoc
@@ -417,9 +418,9 @@ func (s *Server) registerStorage(w http.ResponseWriter, r *http.Request) {
 // @Tags		Storages
 // @Produce		json
 // @Param		storageID	path		string	true	"ID Storage"
-// @Success		200			{object}	StorageResponse
-// @Failure		404			{object}	ErrorResponse	"Storage не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Success		200			{object}	coordinatorapi.StorageResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Storage не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/storages/{storageID} [get]
 func (s *Server) getStorage(w http.ResponseWriter, r *http.Request) {
 	storageID := chi.URLParam(r, "storageID")
@@ -434,7 +435,7 @@ func (s *Server) getStorage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusOK, storageToResponse(storage))
+	s.writeJSON(w, http.StatusOK, coordinatorapi.StorageToResponse(storage))
 }
 
 // listStorages godoc
@@ -442,8 +443,8 @@ func (s *Server) getStorage(w http.ResponseWriter, r *http.Request) {
 // @Description	Возвращает список всех зарегистрированных Storages
 // @Tags		Storages
 // @Produce		json
-// @Success		200	{array}		StorageResponse
-// @Failure		500	{object}	ErrorResponse
+// @Success		200	{array}		coordinatorapi.StorageResponse
+// @Failure		500	{object}	coordinatorapi.ErrorResponse
 // @Router		/storages [get]
 func (s *Server) listStorages(w http.ResponseWriter, r *http.Request) {
 	storages, err := s.coordinator.GetStorage().ListStorages(r.Context())
@@ -452,9 +453,9 @@ func (s *Server) listStorages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := make([]StorageResponse, len(storages))
+	resp := make([]coordinatorapi.StorageResponse, len(storages))
 	for i, st := range storages {
-		resp[i] = storageToResponse(st)
+		resp[i] = coordinatorapi.StorageToResponse(st)
 	}
 
 	s.writeJSON(w, http.StatusOK, resp)
@@ -466,8 +467,8 @@ func (s *Server) listStorages(w http.ResponseWriter, r *http.Request) {
 // @Tags		Storages
 // @Param		storageID	path	string	true	"ID Storage"
 // @Success		204			"No Content"
-// @Failure		404			{object}	ErrorResponse	"Storage не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Storage не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/storages/{storageID}/heartbeat [put]
 func (s *Server) updateStorageHeartbeat(w http.ResponseWriter, r *http.Request) {
 	storageID := chi.URLParam(r, "storageID")
@@ -490,8 +491,8 @@ func (s *Server) updateStorageHeartbeat(w http.ResponseWriter, r *http.Request) 
 // @Tags		Storages
 // @Param		storageID	path	string	true	"ID Storage"
 // @Success		204			"No Content"
-// @Failure		404			{object}	ErrorResponse	"Storage не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Storage не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/storages/{storageID} [delete]
 func (s *Server) unregisterStorage(w http.ResponseWriter, r *http.Request) {
 	storageID := chi.URLParam(r, "storageID")
@@ -516,14 +517,14 @@ func (s *Server) unregisterStorage(w http.ResponseWriter, r *http.Request) {
 // @Tags		Pushers
 // @Accept		json
 // @Produce		json
-// @Param		request	body		RegisterPusherRequest	true	"Данные Pusher"
-// @Success		201		{object}	PusherResponse
-// @Failure		400		{object}	ErrorResponse
-// @Failure		409		{object}	ErrorResponse	"Pusher уже существует"
-// @Failure		500		{object}	ErrorResponse
+// @Param		request	body		coordinatorapi.RegisterPusherRequest	true	"Данные Pusher"
+// @Success		201		{object}	coordinatorapi.PusherResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse
+// @Failure		409		{object}	coordinatorapi.ErrorResponse	"Pusher уже существует"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/pushers [post]
 func (s *Server) registerPusher(w http.ResponseWriter, r *http.Request) {
-	var req RegisterPusherRequest
+	var req coordinatorapi.RegisterPusherRequest
 	if err := s.decodeJSON(r, &req); err != nil {
 		s.writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -553,7 +554,7 @@ func (s *Server) registerPusher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, pusherToResponse(p))
+	s.writeJSON(w, http.StatusCreated, coordinatorapi.PusherToResponse(p))
 }
 
 // getPusher godoc
@@ -562,9 +563,9 @@ func (s *Server) registerPusher(w http.ResponseWriter, r *http.Request) {
 // @Tags		Pushers
 // @Produce		json
 // @Param		pusherID	path		string	true	"ID Pusher"
-// @Success		200			{object}	PusherResponse
-// @Failure		404			{object}	ErrorResponse	"Pusher не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Success		200			{object}	coordinatorapi.PusherResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Pusher не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/pushers/{pusherID} [get]
 func (s *Server) getPusher(w http.ResponseWriter, r *http.Request) {
 	pusherID := chi.URLParam(r, "pusherID")
@@ -579,7 +580,7 @@ func (s *Server) getPusher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusOK, pusherToResponse(pusher))
+	s.writeJSON(w, http.StatusOK, coordinatorapi.PusherToResponse(pusher))
 }
 
 // listPushers godoc
@@ -587,8 +588,8 @@ func (s *Server) getPusher(w http.ResponseWriter, r *http.Request) {
 // @Description	Возвращает список всех зарегистрированных Pushers
 // @Tags		Pushers
 // @Produce		json
-// @Success		200	{array}		PusherResponse
-// @Failure		500	{object}	ErrorResponse
+// @Success		200	{array}		coordinatorapi.PusherResponse
+// @Failure		500	{object}	coordinatorapi.ErrorResponse
 // @Router		/pushers [get]
 func (s *Server) listPushers(w http.ResponseWriter, r *http.Request) {
 	pushers, err := s.coordinator.GetStorage().ListPushers(r.Context())
@@ -597,9 +598,9 @@ func (s *Server) listPushers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := make([]PusherResponse, len(pushers))
+	resp := make([]coordinatorapi.PusherResponse, len(pushers))
 	for i, p := range pushers {
-		resp[i] = pusherToResponse(p)
+		resp[i] = coordinatorapi.PusherToResponse(p)
 	}
 
 	s.writeJSON(w, http.StatusOK, resp)
@@ -611,8 +612,8 @@ func (s *Server) listPushers(w http.ResponseWriter, r *http.Request) {
 // @Tags		Pushers
 // @Param		pusherID	path	string	true	"ID Pusher"
 // @Success		204			"No Content"
-// @Failure		404			{object}	ErrorResponse	"Pusher не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Pusher не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/pushers/{pusherID}/heartbeat [put]
 func (s *Server) updatePusherHeartbeat(w http.ResponseWriter, r *http.Request) {
 	pusherID := chi.URLParam(r, "pusherID")
@@ -635,8 +636,8 @@ func (s *Server) updatePusherHeartbeat(w http.ResponseWriter, r *http.Request) {
 // @Tags		Pushers
 // @Param		pusherID	path	string	true	"ID Pusher"
 // @Success		204			"No Content"
-// @Failure		404			{object}	ErrorResponse	"Pusher не найден"
-// @Failure		500			{object}	ErrorResponse
+// @Failure		404			{object}	coordinatorapi.ErrorResponse	"Pusher не найден"
+// @Failure		500			{object}	coordinatorapi.ErrorResponse
 // @Router		/pushers/{pusherID} [delete]
 func (s *Server) unregisterPusher(w http.ResponseWriter, r *http.Request) {
 	pusherID := chi.URLParam(r, "pusherID")
@@ -661,14 +662,14 @@ func (s *Server) unregisterPusher(w http.ResponseWriter, r *http.Request) {
 // @Tags		RoutingRules
 // @Accept		json
 // @Produce		json
-// @Param		request	body		CreateRoutingRuleRequest	true	"Данные правила"
-// @Success		201		{object}	RoutingRuleResponse
-// @Failure		400		{object}	ErrorResponse
-// @Failure		409		{object}	ErrorResponse	"Правило уже существует"
-// @Failure		500		{object}	ErrorResponse
+// @Param		request	body		coordinatorapi.CreateRoutingRuleRequest	true	"Данные правила"
+// @Success		201		{object}	coordinatorapi.RoutingRuleResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse
+// @Failure		409		{object}	coordinatorapi.ErrorResponse	"Правило уже существует"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/routing-rules [post]
 func (s *Server) createRoutingRule(w http.ResponseWriter, r *http.Request) {
-	var req CreateRoutingRuleRequest
+	var req coordinatorapi.CreateRoutingRuleRequest
 	if err := s.decodeJSON(r, &req); err != nil {
 		s.writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -696,7 +697,7 @@ func (s *Server) createRoutingRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusCreated, routingRuleToResponse(rule))
+	s.writeJSON(w, http.StatusCreated, coordinatorapi.RoutingRuleToResponse(rule))
 }
 
 // getRoutingRule godoc
@@ -705,9 +706,9 @@ func (s *Server) createRoutingRule(w http.ResponseWriter, r *http.Request) {
 // @Tags		RoutingRules
 // @Produce		json
 // @Param		ruleID	path		string	true	"ID правила"
-// @Success		200		{object}	RoutingRuleResponse
-// @Failure		404		{object}	ErrorResponse	"Правило не найдено"
-// @Failure		500		{object}	ErrorResponse
+// @Success		200		{object}	coordinatorapi.RoutingRuleResponse
+// @Failure		404		{object}	coordinatorapi.ErrorResponse	"Правило не найдено"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/routing-rules/{ruleID} [get]
 func (s *Server) getRoutingRule(w http.ResponseWriter, r *http.Request) {
 	ruleID := chi.URLParam(r, "ruleID")
@@ -722,7 +723,7 @@ func (s *Server) getRoutingRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusOK, routingRuleToResponse(rule))
+	s.writeJSON(w, http.StatusOK, coordinatorapi.RoutingRuleToResponse(rule))
 }
 
 // listRoutingRules godoc
@@ -730,8 +731,8 @@ func (s *Server) getRoutingRule(w http.ResponseWriter, r *http.Request) {
 // @Description	Возвращает список всех правил маршрутизации
 // @Tags		RoutingRules
 // @Produce		json
-// @Success		200	{array}		RoutingRuleResponse
-// @Failure		500	{object}	ErrorResponse
+// @Success		200	{array}		coordinatorapi.RoutingRuleResponse
+// @Failure		500	{object}	coordinatorapi.ErrorResponse
 // @Router		/routing-rules [get]
 func (s *Server) listRoutingRules(w http.ResponseWriter, r *http.Request) {
 	rules, err := s.coordinator.GetStorage().ListRoutingRules(r.Context())
@@ -740,9 +741,9 @@ func (s *Server) listRoutingRules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := make([]RoutingRuleResponse, len(rules))
+	resp := make([]coordinatorapi.RoutingRuleResponse, len(rules))
 	for i, rule := range rules {
-		resp[i] = routingRuleToResponse(rule)
+		resp[i] = coordinatorapi.RoutingRuleToResponse(rule)
 	}
 
 	s.writeJSON(w, http.StatusOK, resp)
@@ -755,16 +756,16 @@ func (s *Server) listRoutingRules(w http.ResponseWriter, r *http.Request) {
 // @Accept		json
 // @Produce		json
 // @Param		ruleID	path		string						true	"ID правила"
-// @Param		request	body		CreateRoutingRuleRequest	true	"Новые данные правила"
-// @Success		200		{object}	RoutingRuleResponse
-// @Failure		400		{object}	ErrorResponse
-// @Failure		404		{object}	ErrorResponse	"Правило не найдено"
-// @Failure		500		{object}	ErrorResponse
+// @Param		request	body		coordinatorapi.CreateRoutingRuleRequest	true	"Новые данные правила"
+// @Success		200		{object}	coordinatorapi.RoutingRuleResponse
+// @Failure		400		{object}	coordinatorapi.ErrorResponse
+// @Failure		404		{object}	coordinatorapi.ErrorResponse	"Правило не найдено"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/routing-rules/{ruleID} [put]
 func (s *Server) updateRoutingRule(w http.ResponseWriter, r *http.Request) {
 	ruleID := chi.URLParam(r, "ruleID")
 
-	var req CreateRoutingRuleRequest
+	var req coordinatorapi.CreateRoutingRuleRequest
 	if err := s.decodeJSON(r, &req); err != nil {
 		s.writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -787,7 +788,7 @@ func (s *Server) updateRoutingRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.writeJSON(w, http.StatusOK, routingRuleToResponse(rule))
+	s.writeJSON(w, http.StatusOK, coordinatorapi.RoutingRuleToResponse(rule))
 }
 
 // deleteRoutingRule godoc
@@ -796,8 +797,8 @@ func (s *Server) updateRoutingRule(w http.ResponseWriter, r *http.Request) {
 // @Tags		RoutingRules
 // @Param		ruleID	path	string	true	"ID правила"
 // @Success		204		"No Content"
-// @Failure		404		{object}	ErrorResponse	"Правило не найдено"
-// @Failure		500		{object}	ErrorResponse
+// @Failure		404		{object}	coordinatorapi.ErrorResponse	"Правило не найдено"
+// @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/routing-rules/{ruleID} [delete]
 func (s *Server) deleteRoutingRule(w http.ResponseWriter, r *http.Request) {
 	ruleID := chi.URLParam(r, "ruleID")
@@ -820,7 +821,7 @@ func (s *Server) deleteRoutingRule(w http.ResponseWriter, r *http.Request) {
 // @Tags		coordinator.ClusterConfig
 // @Produce		json
 // @Success		200	{object}	coordinator.ClusterConfig
-// @Failure		500	{object}	ErrorResponse
+// @Failure		500	{object}	coordinatorapi.ErrorResponse
 // @Router		/cluster-config [get]
 func (s *Server) getClusterConfig(w http.ResponseWriter, r *http.Request) {
 	config := s.coordinator.GetClusterConfig()
@@ -834,10 +835,11 @@ func (s *Server) getClusterConfig(w http.ResponseWriter, r *http.Request) {
 // @Tags		coordinator.CoordinatorConfig
 // @Produce		json
 // @Success		200	{object}	coordinator.CoordinatorConfig
-// @Failure		500	{object}	ErrorResponse
+// @Failure		500	{object}	coordinatorapi.ErrorResponse
 // @Router		/coordinator-config [get]
 func (s *Server) getCoordinatorConfig(w http.ResponseWriter, r *http.Request) {
 	config := s.coordinator.GetCoordinatorConfig()
 
 	s.writeJSON(w, http.StatusOK, config)
 }
+
