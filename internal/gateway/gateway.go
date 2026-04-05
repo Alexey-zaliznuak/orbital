@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Alexey-zaliznuak/orbital/pkg/bus"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/message"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/pusher"
@@ -14,8 +15,6 @@ import (
 	"github.com/Alexey-zaliznuak/orbital/pkg/logger"
 	natsclient "github.com/Alexey-zaliznuak/orbital/pkg/nats"
 	"github.com/Alexey-zaliznuak/orbital/pkg/sdk/coordinator"
-	pusherSdk "github.com/Alexey-zaliznuak/orbital/pkg/sdk/pusher"
-	storageSdk "github.com/Alexey-zaliznuak/orbital/pkg/sdk/storage/nats"
 	"go.uber.org/zap"
 )
 
@@ -23,8 +22,7 @@ type BaseGateway struct {
 	config            *gateway.GatewayConfig
 	coordinatorClient *coordinator.Client
 	natsClient        *natsclient.Client
-	storageClient     *storageSdk.Client
-	pusherClient      *pusherSdk.Client
+	bus               *bus.Client
 
 	storages   []*storage.Info
 	storagesMu sync.RWMutex
@@ -56,7 +54,7 @@ func (g *BaseGateway) sendToStorage(message *message.Message) error {
 
 	for _, storage := range storages {
 		if storage.AcceptsDelay(delay) {
-			return g.storageClient.SendMessage(storage.ID, message)
+			return g.bus.SendToStorage(storage.ID, message)
 		}
 	}
 
@@ -75,7 +73,7 @@ func (g *BaseGateway) sendToPusher(message *message.Message) error {
 
 	for _, rule := range rules {
 		if rule.Match(message.RoutingKey) {
-			return g.pusherClient.SendMessage(rule.PusherID, message)
+			return g.bus.SendToPusher(rule.PusherID, message)
 		}
 	}
 
@@ -213,8 +211,7 @@ func NewBaseGateway(ctx context.Context, cfg *gateway.GatewayConfig) (*BaseGatew
 		config:                   cfg,
 		coordinatorClient:        coordinatorClient,
 		natsClient:               nc,
-		storageClient:            storageSdk.New(nc),
-		pusherClient:             pusherSdk.New(nc),
+		bus:                      bus.New(nc),
 		storages:                 make([]*storage.Info, 0),
 		pushers:                  make([]*pusher.Info, 0),
 		routingRules:             make([]*routingrule.RoutingRule, 0),
