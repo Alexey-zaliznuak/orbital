@@ -55,16 +55,6 @@ func MessageResponseFromMessage(m *message.Message) MessageResponse {
 	}
 }
 
-// FetchReadyResponse ответ на запрос готовых к доставке сообщений.
-type FetchReadyResponse struct {
-	Messages []MessageResponse `json:"messages"`
-}
-
-// AcknowledgeRequest запрос на подтверждение обработки сообщений.
-type AcknowledgeRequest struct {
-	IDs []string `json:"ids"`
-}
-
 // CountResponse ответ с количеством сообщений в хранилище.
 type CountResponse struct {
 	Count int64 `json:"count"`

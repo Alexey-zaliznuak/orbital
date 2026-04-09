@@ -2,12 +2,12 @@ package inmemory
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 
-	storageapi "github.com/Alexey-zaliznuak/orbital/pkg/storage/api"
+	storageapi "github.com/Alexey-zaliznuak/orbital/pkg/sdk/storage/api"
 )
 
 func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
@@ -28,6 +28,11 @@ func (s *Server) store(w http.ResponseWriter, r *http.Request) {
 
 	msg := req.ToMessage()
 	if err := s.storage.Store(r.Context(), msg); err != nil {
+		if errors.Is(err, ErrAlreadyExists) {
+			s.writeError(w, http.StatusConflict, err.Error())
+			return
+		}
+
 		s.writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -35,51 +40,20 @@ func (s *Server) store(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusCreated, storageapi.MessageResponseFromMessage(msg))
 }
 
-func (s *Server) fetchReady(w http.ResponseWriter, r *http.Request) {
-	limit := 100
-	if raw := r.URL.Query().Get("limit"); raw != "" {
-		parsed, err := strconv.Atoi(raw)
-		if err != nil || parsed <= 0 {
-			s.writeError(w, http.StatusBadRequest, "invalid limit parameter")
-			return
-		}
-		limit = parsed
-	}
-
-	msgs, err := s.storage.FetchReady(r.Context(), limit)
-	if err != nil {
-		s.writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	response := make([]storageapi.MessageResponse, len(msgs))
-	for i, msg := range msgs {
-		response[i] = storageapi.MessageResponseFromMessage(msg)
-	}
-	s.writeJSON(w, http.StatusOK, storageapi.FetchReadyResponse{Messages: response})
-}
-
-func (s *Server) acknowledge(w http.ResponseWriter, r *http.Request) {
-	var req storageapi.AcknowledgeRequest
-	if err := s.decodeJSON(r, &req); err != nil {
-		s.writeError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if err := s.storage.Acknowledge(r.Context(), req.IDs); err != nil {
-		s.writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func (s *Server) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	msg, err := s.storage.GetByID(r.Context(), id)
 	if err != nil {
-		s.writeError(w, http.StatusNotFound, "message not found")
+		if errors.Is(err, ErrNotFound) {
+			s.writeError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		if errors.Is(err, ErrNotInitialized) {
+			s.writeError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		s.writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	gatewayapi "github.com/Alexey-zaliznuak/orbital/pkg/gateway/api"
+	gatewayapi "github.com/Alexey-zaliznuak/orbital/pkg/sdk/gateway/api"
 
 	// Используется в swagger-аннотациях.
 	_ "github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"

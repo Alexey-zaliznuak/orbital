@@ -2,13 +2,21 @@ package inmemory
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/Alexey-zaliznuak/orbital/pkg/bus"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/message"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/storage"
+	"github.com/Alexey-zaliznuak/orbital/pkg/logger"
+	natsclient "github.com/Alexey-zaliznuak/orbital/pkg/nats"
+	"github.com/Alexey-zaliznuak/orbital/pkg/sdk/coordinator"
+	"go.uber.org/zap"
 )
 
 var (
@@ -17,65 +25,155 @@ var (
 	ErrAlreadyExists  = errors.New("message with this ID already exists")
 )
 
-// InMemoryStorage реализует storage.MessageStorage в оперативной памяти.
-// Взятые сообщения помечаются как in-flight и не возвращаются повторно до Acknowledge.
-type InMemoryStorage struct {
-	mu       sync.RWMutex
-	messages map[string]*message.Message
-	inflight map[string]struct{}
-
-	config *storage.BaseStorageConfig
-	ready  bool
+type dumpData struct {
+	Messages map[string]*message.Message `json:"messages"`
+	Inflight []string                    `json:"inflight"`
 }
 
-// NewInMemoryStorage создаёт незаполненное хранилище.
-// Перед использованием необходимо вызвать Initialize.
+type InMemoryStorage struct {
+	mu sync.RWMutex
+
+	initOnce     sync.Once
+	loadDumpOnce sync.Once
+
+	messagesMu sync.RWMutex
+	messages   map[string]*message.Message
+
+	inflightMu sync.RWMutex
+	inflight   map[string]*message.Message
+
+	inflightProcessMu    sync.Mutex
+	sendExpiredProcessMu sync.Mutex
+
+	busClient *bus.Client
+
+	cfg   *InMemoryStorageConfig
+	ready bool
+}
+
 func NewInMemoryStorage() *InMemoryStorage {
 	return &InMemoryStorage{}
 }
 
-// Initialize настраивает хранилище. config должен быть *storage.BaseStorageConfig.
-func (s *InMemoryStorage) Initialize(_ context.Context, rawConfig any) error {
-	cfg, ok := rawConfig.(*storage.BaseStorageConfig)
+func (s *InMemoryStorage) Initialize(ctx context.Context, rawConfig any) error {
+	var err error
+
+	s.initOnce.Do(func() {
+		err = s.initialize(ctx, rawConfig)
+		if err != nil {
+			logger.Log.Error("failed to initialize storage", zap.Error(err))
+		}
+	})
+
+	return err
+}
+
+func (s *InMemoryStorage) initialize(ctx context.Context, rawConfig any) error {
+	if s.ready {
+		return nil
+	}
+
+	cfg, ok := rawConfig.(*InMemoryStorageConfig)
+
 	if !ok {
-		return fmt.Errorf("expected *storage.BaseStorageConfig, got %T", rawConfig)
+		return fmt.Errorf("expected *InMemoryStorageConfig, got %T", rawConfig)
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.config = cfg
+	coordinatorClient := coordinator.NewClient(coordinator.ClientConfig{
+		BaseURL: cfg.ClusterAddress,
+	})
+
+	clusterCfg, err := coordinatorClient.GetClusterConfig(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get cluster config: %w", err)
+	}
+
+	natsClient, err := natsclient.New(natsclient.Config{
+		URL: clusterCfg.NatsAddress,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to connect to NATS: %w", err)
+	}
+
+	s.busClient = bus.New(natsClient)
+
+	s.cfg = cfg
 	s.messages = make(map[string]*message.Message)
-	s.inflight = make(map[string]struct{})
+	s.inflight = make(map[string]*message.Message)
 	s.ready = true
 
+	s.loadDumpOnce.Do(func() {
+		if !cfg.UseDump {
+			return
+		}
+		if err := s.LoadFromDump(ctx); err != nil {
+			logger.Log.Error("failed to load dump", zap.Error(err))
+		}
+	})
+
+	findExpiredTicker := time.NewTicker(cfg.FindExpiredInterval)
+	sendExpiredTicker := time.NewTicker(cfg.SendExpiredInterval)
+
+	go func() {
+		defer findExpiredTicker.Stop()
+		defer sendExpiredTicker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				if s.cfg.UseDump {
+					if err := s.Dump(ctx); err != nil {
+						logger.Log.Error("failed to dump", zap.Error(err))
+					}
+				}
+				return
+			case <-findExpiredTicker.C:
+				go func() {
+					if ok := s.inflightProcessMu.TryLock(); !ok {
+						return
+					}
+					defer s.inflightProcessMu.Unlock()
+
+					if err := s.moveExpiredToInflight(ctx); err != nil {
+						logger.Log.Error("failed to move ready to inflight", zap.Error(err))
+					}
+				}()
+			case <-sendExpiredTicker.C:
+				go func() {
+					if ok := s.sendExpiredProcessMu.TryLock(); !ok {
+						return
+					}
+					defer s.sendExpiredProcessMu.Unlock()
+
+					if err := s.processMessages(ctx); err != nil {
+						logger.Log.Error("failed to process expired messages", zap.Error(err))
+					}
+				}()
+			}
+		}
+	}()
+
 	return nil
 }
 
-// Connect — no-op для in-memory хранилища.
-func (s *InMemoryStorage) Connect(_ context.Context) error {
-	return nil
-}
-
-// CloseConnection — no-op для in-memory хранилища.
-func (s *InMemoryStorage) CloseConnection(_ context.Context) error {
-	return nil
-}
-
-// HealthCheck возвращает StorageHealthOK если хранилище инициализировано.
 func (s *InMemoryStorage) HealthCheck(_ context.Context) (storage.StorageHealth, error) {
+	if err := s.checkReady(); err != nil {
+		return storage.StorageHealthDisconnect, err
+	}
 	return storage.StorageHealthOK, nil
 }
 
-// Store сохраняет сообщение. Если ID не задан — генерируется UUIDv6.
-// Дублирование по ID не допускается.
 func (s *InMemoryStorage) Store(_ context.Context, msg *message.Message) error {
 	if err := s.checkReady(); err != nil {
 		return err
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.messagesMu.Lock()
+	defer s.messagesMu.Unlock()
 
 	copied := *msg
 	if copied.ID == "" {
@@ -91,64 +189,96 @@ func (s *InMemoryStorage) Store(_ context.Context, msg *message.Message) error {
 	return nil
 }
 
-// FetchReady возвращает до limit сообщений, готовых к доставке (ScheduledAt <= now),
-// и помечает их как in-flight — повторный FetchReady их не вернёт до Acknowledge.
-func (s *InMemoryStorage) FetchReady(_ context.Context, limit int) ([]*message.Message, error) {
+func (s *InMemoryStorage) processMessages(ctx context.Context) error {
 	if err := s.checkReady(); err != nil {
-		return nil, err
+		return err
+	}
+
+	s.inflightMu.RLock()
+
+	batchSize := int(math.Min(float64(len(s.inflight)), float64(s.cfg.MaxOutputBatchSize)))
+
+	if batchSize == 0 {
+		return nil
+	}
+
+	ids := make([]string, 0, batchSize)
+	msgs := make([]*message.Message, 0, batchSize)
+
+	for _, msg := range s.inflight {
+		msgs = append(msgs, msg)
+		ids = append(ids, msg.ID)
+
+		if len(msgs) >= batchSize {
+			break
+		}
+	}
+
+	s.inflightMu.RUnlock()
+
+	if err := s.busClient.SendToGateway(msgs); err != nil {
+		return err
+	}
+
+	if err := s.acknowledge(ctx, ids); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *InMemoryStorage) moveExpiredToInflight(_ context.Context) error {
+	if err := s.checkReady(); err != nil {
+		return err
 	}
 
 	now := time.Now()
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.messagesMu.RLock()
+	defer s.messagesMu.RUnlock()
 
-	result := make([]*message.Message, 0, limit)
+	s.inflightMu.Lock()
+	defer s.inflightMu.Unlock()
 
 	for id, msg := range s.messages {
-		if len(result) >= limit {
-			break
-		}
 		if _, inFlight := s.inflight[id]; inFlight {
 			continue
 		}
 		if !isReady(msg, now) {
 			continue
 		}
-		s.inflight[id] = struct{}{}
-		copied := *msg
-		result = append(result, &copied)
-	}
-
-	return result, nil
-}
-
-// Acknowledge подтверждает обработку сообщений и удаляет их из хранилища.
-// Неизвестные ID игнорируются.
-func (s *InMemoryStorage) Acknowledge(_ context.Context, ids []string) error {
-	if err := s.checkReady(); err != nil {
-		return err
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, id := range ids {
-		delete(s.messages, id)
-		delete(s.inflight, id)
+		s.inflight[id] = msg
 	}
 
 	return nil
 }
 
-// GetByID возвращает сообщение по ID (включая in-flight).
+func (s *InMemoryStorage) acknowledge(_ context.Context, ids []string) error {
+	if err := s.checkReady(); err != nil {
+		return err
+	}
+
+	s.messagesMu.Lock()
+	defer s.messagesMu.Unlock()
+
+	s.inflightMu.Lock()
+	defer s.inflightMu.Unlock()
+
+	for _, id := range ids {
+		delete(s.inflight, id)
+		delete(s.messages, id)
+	}
+
+	return nil
+}
+
 func (s *InMemoryStorage) GetByID(_ context.Context, id string) (*message.Message, error) {
 	if err := s.checkReady(); err != nil {
 		return nil, err
 	}
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.messagesMu.RLock()
+	defer s.messagesMu.RUnlock()
 
 	msg, ok := s.messages[id]
 	if !ok {
@@ -159,19 +289,89 @@ func (s *InMemoryStorage) GetByID(_ context.Context, id string) (*message.Messag
 	return &copied, nil
 }
 
-// Count возвращает общее количество сообщений (включая in-flight).
 func (s *InMemoryStorage) Count(_ context.Context) (int64, error) {
 	if err := s.checkReady(); err != nil {
 		return 0, err
 	}
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.messagesMu.RLock()
+	defer s.messagesMu.RUnlock()
 
 	return int64(len(s.messages)), nil
 }
 
-// isReady — сообщение готово к доставке если ScheduledAt не задан или уже наступил.
+func (s *InMemoryStorage) Dump(_ context.Context) error {
+	if err := s.checkReady(); err != nil {
+		return err
+	}
+
+	s.messagesMu.RLock()
+	defer s.messagesMu.RUnlock()
+
+	s.inflightMu.RLock()
+	defer s.inflightMu.RUnlock()
+
+	inflight := make([]string, 0, len(s.inflight))
+
+	for id := range s.inflight {
+		inflight = append(inflight, id)
+	}
+
+	data := dumpData{
+		Messages: s.messages,
+		Inflight: inflight,
+	}
+
+	raw, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return fmt.Errorf("dump marshal: %w", err)
+	}
+
+	if err := os.WriteFile(s.cfg.DumpFile, raw, 0o644); err != nil {
+		return fmt.Errorf("dump write %s: %w", s.cfg.DumpFile, err)
+	}
+
+	return nil
+}
+
+func (s *InMemoryStorage) LoadFromDump(_ context.Context) error {
+	raw, err := os.ReadFile(s.cfg.DumpFile)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("dump read %s: %w", s.cfg.DumpFile, err)
+	}
+
+	var data dumpData
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return fmt.Errorf("dump unmarshal: %w", err)
+	}
+
+	s.messagesMu.Lock()
+	defer s.messagesMu.Unlock()
+
+	s.inflightMu.Lock()
+	defer s.inflightMu.Unlock()
+
+	s.messages = data.Messages
+	if s.messages == nil {
+		s.messages = make(map[string]*message.Message)
+	}
+
+	s.inflight = make(map[string]*message.Message, len(data.Inflight))
+
+	for _, id := range data.Inflight {
+		msg, ok := data.Messages[id]
+		if !ok {
+			continue
+		}
+		s.inflight[id] = msg
+	}
+
+	return nil
+}
+
 func isReady(msg *message.Message, now time.Time) bool {
 	return msg.ScheduledAt.IsZero() || !msg.ScheduledAt.After(now)
 }
@@ -179,6 +379,7 @@ func isReady(msg *message.Message, now time.Time) bool {
 func (s *InMemoryStorage) checkReady() error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	if !s.ready {
 		return ErrNotInitialized
 	}

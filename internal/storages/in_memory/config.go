@@ -7,49 +7,73 @@ import (
 	"github.com/caarlos0/env/v11"
 )
 
-// InMemoryStorageConfigBuilder строит конфигурацию in-memory хранилища.
-type InMemoryStorageConfigBuilder struct {
-	cfg *storage.BaseStorageConfig
+type InMemoryStorageConfig struct {
+	storage.BaseStorageConfig
+
+	UseDump  bool   `env:"USE_DUMP" envDefault:"true"`
+	DumpFile string `env:"DUMP_FILE" envDefault:"./dump.json"`
 }
 
-// NewBuilder создаёт новый builder с дефолтными значениями.
+type InMemoryStorageConfigBuilder struct {
+	cfg *InMemoryStorageConfig
+}
+
 func NewBuilder() *InMemoryStorageConfigBuilder {
 	return &InMemoryStorageConfigBuilder{
-		cfg: &storage.BaseStorageConfig{},
+		cfg: &InMemoryStorageConfig{},
 	}
 }
 
-// WithID устанавливает идентификатор хранилища.
 func (b *InMemoryStorageConfigBuilder) WithID(id string) *InMemoryStorageConfigBuilder {
 	b.cfg.ID = id
 	return b
 }
 
-// WithAddress устанавливает адрес хранилища.
 func (b *InMemoryStorageConfigBuilder) WithAddress(addr string) *InMemoryStorageConfigBuilder {
 	b.cfg.Address = addr
 	return b
 }
 
-// WithMinDelay устанавливает минимальную задержку сообщений.
+func (b *InMemoryStorageConfigBuilder) WithClusterAddress(addr string) *InMemoryStorageConfigBuilder {
+	b.cfg.ClusterAddress = addr
+	return b
+}
+
 func (b *InMemoryStorageConfigBuilder) WithMinDelay(d time.Duration) *InMemoryStorageConfigBuilder {
 	b.cfg.MinDelay = d
 	return b
 }
 
-// WithMaxDelay устанавливает максимальную задержку сообщений (0 = без ограничения).
 func (b *InMemoryStorageConfigBuilder) WithMaxDelay(d time.Duration) *InMemoryStorageConfigBuilder {
 	b.cfg.MaxDelay = d
 	return b
 }
 
-// FromEnv загружает конфигурацию из переменных окружения.
+func (b *InMemoryStorageConfigBuilder) WithFindExpiredInterval(d time.Duration) *InMemoryStorageConfigBuilder {
+	b.cfg.FindExpiredInterval = d
+	return b
+}
+
+func (b *InMemoryStorageConfigBuilder) WithSendExpiredInterval(d time.Duration) *InMemoryStorageConfigBuilder {
+	b.cfg.SendExpiredInterval = d
+	return b
+}
+
+func (b *InMemoryStorageConfigBuilder) WithDumpFile(path string) *InMemoryStorageConfigBuilder {
+	b.cfg.DumpFile = path
+	return b
+}
+
+func (b *InMemoryStorageConfigBuilder) WithMaxOutputBatchSize(size int) *InMemoryStorageConfigBuilder {
+	b.cfg.MaxOutputBatchSize = size
+	return b
+}
+
 func (b *InMemoryStorageConfigBuilder) FromEnv() *InMemoryStorageConfigBuilder {
 	env.Parse(b.cfg)
 	return b
 }
 
-// Build возвращает готовую конфигурацию.
-func (b *InMemoryStorageConfigBuilder) Build() *storage.BaseStorageConfig {
+func (b *InMemoryStorageConfigBuilder) Build() *InMemoryStorageConfig {
 	return b.cfg
 }

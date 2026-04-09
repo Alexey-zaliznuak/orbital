@@ -6,12 +6,12 @@ COPY go.mod ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /storage-in-memory ./cmd/storages/in_memory
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/bin/storage-in-memory ./cmd/storages/in_memory
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates wget
 WORKDIR /root/
-COPY --from=builder /storage-in-memory .
+COPY --from=builder /app/bin/storage-in-memory .
 
 EXPOSE 9090
 CMD ["./storage-in-memory"]

@@ -7,11 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/message"
-	storageapi "github.com/Alexey-zaliznuak/orbital/pkg/storage/api"
+	storageapi "github.com/Alexey-zaliznuak/orbital/pkg/sdk/storage/api"
 )
 
 const apiPrefix = "/api/v1"
@@ -106,65 +105,65 @@ func (c *Client) Store(ctx context.Context, msg *message.Message) (*message.Mess
 }
 
 // FetchReady возвращает до limit готовых к доставке сообщений.
-func (c *Client) FetchReady(ctx context.Context, limit int) ([]*message.Message, error) {
-	url := c.url("/messages/ready")
-	if limit > 0 {
-		url += "?limit=" + strconv.Itoa(limit)
-	}
+// func (c *Client) FetchReady(ctx context.Context, limit int) ([]*message.Message, error) {
+// 	url := c.url("/messages/ready")
+// 	if limit > 0 {
+// 		url += "?limit=" + strconv.Itoa(limit)
+// 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
+// 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to create request: %w", err)
+// 	}
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch ready messages: %w", err)
-	}
-	defer resp.Body.Close()
+// 	resp, err := c.httpClient.Do(req)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to fetch ready messages: %w", err)
+// 	}
+// 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, c.decodeError(resp)
-	}
+// 	if resp.StatusCode != http.StatusOK {
+// 		return nil, c.decodeError(resp)
+// 	}
 
-	var result storageapi.FetchReadyResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
+// 	var result storageapi.FetchReadyResponse
+// 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+// 		return nil, fmt.Errorf("failed to decode response: %w", err)
+// 	}
 
-	messages := make([]*message.Message, len(result.Messages))
-	for i, m := range result.Messages {
-		messages[i] = messageResponseToMessage(m)
-	}
+// 	messages := make([]*message.Message, len(result.Messages))
+// 	for i, m := range result.Messages {
+// 		messages[i] = messageResponseToMessage(m)
+// 	}
 
-	return messages, nil
-}
+// 	return messages, nil
+// }
 
 // Acknowledge подтверждает обработку сообщений по их идентификаторам.
-func (c *Client) Acknowledge(ctx context.Context, ids []string) error {
-	body, err := json.Marshal(storageapi.AcknowledgeRequest{IDs: ids})
-	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
-	}
+// func (c *Client) Acknowledge(ctx context.Context, ids []string) error {
+// 	body, err := json.Marshal(storageapi.AcknowledgeRequest{IDs: ids})
+// 	if err != nil {
+// 		return fmt.Errorf("failed to marshal request: %w", err)
+// 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.url("/messages/acknowledge"), bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
+// 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.url("/messages/acknowledge"), bytes.NewReader(body))
+// 	if err != nil {
+// 		return fmt.Errorf("failed to create request: %w", err)
+// 	}
+// 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to acknowledge messages: %w", err)
-	}
-	defer resp.Body.Close()
+// 	resp, err := c.httpClient.Do(req)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to acknowledge messages: %w", err)
+// 	}
+// 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
-		return c.decodeError(resp)
-	}
+// 	if resp.StatusCode != http.StatusNoContent {
+// 		return c.decodeError(resp)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // GetByID возвращает сообщение по идентификатору.
 func (c *Client) GetByID(ctx context.Context, id string) (*message.Message, error) {
@@ -243,4 +242,3 @@ func messageResponseToMessage(r storageapi.MessageResponse) *message.Message {
 		message.WithScheduledAt(r.ScheduledAt),
 	)
 }
-

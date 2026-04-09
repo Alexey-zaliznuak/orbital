@@ -48,39 +48,39 @@ func (g *BaseGateway) Consume(message *message.Message) error {
 	return g.sendToStorage(message)
 }
 
-func (g *BaseGateway) sendToStorage(message *message.Message) error {
+func (g *BaseGateway) sendToStorage(msg *message.Message) error {
 	storages := g.GetStorages()
-	delay := time.Until(message.ScheduledAt)
+	delay := time.Until(msg.ScheduledAt)
 
 	for _, storage := range storages {
 		if storage.AcceptsDelay(delay) {
-			return g.bus.SendToStorage(storage.ID, message)
+			return g.bus.SendToStorage(storage.ID, []*message.Message{msg})
 		}
 	}
 
 	logger.Log.Warn(
 		"No storages for saving message, sending to pusher",
-		zap.String("id", message.ID),
-		zap.String("key", message.RoutingKey),
-		zap.Time("scheduledAt", message.ScheduledAt),
+		zap.String("id", msg.ID),
+		zap.String("key", msg.RoutingKey),
+		zap.Time("scheduledAt", msg.ScheduledAt),
 	)
 
-	return g.sendToPusher(message)
+	return g.sendToPusher(msg)
 }
 
-func (g *BaseGateway) sendToPusher(message *message.Message) error {
+func (g *BaseGateway) sendToPusher(msg *message.Message) error {
 	rules := g.GetRoutingRules()
 
 	for _, rule := range rules {
-		if rule.Match(message.RoutingKey) {
-			return g.bus.SendToPusher(rule.PusherID, message)
+		if rule.Match(msg.RoutingKey) {
+			return g.bus.SendToPusher(rule.PusherID, []*message.Message{msg})
 		}
 	}
 
 	logger.Log.Warn(
 		"No pusher for sending message, message will be dropped",
-		zap.String("id", message.ID),
-		zap.String("key", message.RoutingKey),
+		zap.String("id", msg.ID),
+		zap.String("key", msg.RoutingKey),
 	)
 
 	return nil

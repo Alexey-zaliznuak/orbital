@@ -7,14 +7,11 @@ import (
 )
 
 // ErrorResponse представляет ответ с ошибкой.
-// @Description Стандартный ответ при возникновении ошибки.
 type ErrorResponse struct {
-	// Error содержит описание ошибки.
 	Error string `json:"error" example:"invalid request body"`
 }
 
 // NewMessageRequest представляет запрос на создание нового сообщения.
-// @Description Запрос для отправки сообщения через gateway.
 type NewMessageRequest struct {
 	// RoutingKey определяет в какие пушеры попадёт сообщение.
 	RoutingKey string `json:"routing_key" example:"notifications.email" binding:"required"`
@@ -41,7 +38,6 @@ func (r NewMessageRequest) ToMessage() *message.Message {
 }
 
 // NewMessageResponse представляет ответ после создания сообщения.
-// @Description Ответ с информацией о созданном сообщении.
 type NewMessageResponse struct {
 	// ID уникальный идентификатор созданного сообщения.
 	ID string `json:"id" example:"msg_01HQ3K5X7Y8Z9ABC"`

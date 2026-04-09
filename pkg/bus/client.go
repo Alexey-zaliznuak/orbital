@@ -14,6 +14,7 @@ import (
 const (
 	subjectStoragePrefix = "orbital.storage."
 	subjectPusherPrefix  = "orbital.push."
+	subjectGateway = "orbital.gateway"
 )
 
 // Client шина сообщений на базе NATS.
@@ -27,17 +28,22 @@ func New(nats *natsclient.Client) *Client {
 }
 
 // SendToStorage публикует сообщение в NATS subject orbital.storage.{storageID}.
-func (c *Client) SendToStorage(storageID string, msg *message.Message) error {
-	return c.publish(subjectStoragePrefix+storageID, msg)
+func (c *Client) SendToStorage(storageID string, msgs []*message.Message) error {
+	return c.publish(subjectStoragePrefix+storageID, msgs)
+}
+
+// SendToGateway публикует сообщение в NATS subject orbital.gateway
+func (c *Client) SendToGateway(msgs []*message.Message) error {
+	return c.publish(subjectGateway, msgs)
 }
 
 // SendToPusher публикует сообщение в NATS subject orbital.push.{pusherID}.
-func (c *Client) SendToPusher(pusherID string, msg *message.Message) error {
-	return c.publish(subjectPusherPrefix+pusherID, msg)
+func (c *Client) SendToPusher(pusherID string, msgs []*message.Message) error {
+	return c.publish(subjectPusherPrefix+pusherID, msgs)
 }
 
-func (c *Client) publish(subject string, msg *message.Message) error {
-	data, err := json.Marshal(msg)
+func (c *Client) publish(subject string, msgs []*message.Message) error {
+	data, err := json.Marshal(msgs)
 	if err != nil {
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}

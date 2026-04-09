@@ -12,13 +12,15 @@ import (
 
 func main() {
 	cfg := inmemory.NewBuilder().FromEnv().Build()
+	ctx := context.Background()
 
 	log.Printf("Starting in-memory storage server...")
 	log.Printf("Storage ID: %s", cfg.ID)
 	log.Printf("HTTP addr: %s", cfg.Address)
 
 	store := inmemory.NewInMemoryStorage()
-	if err := store.Initialize(context.Background(), cfg); err != nil {
+
+	if err := store.Initialize(ctx, cfg); err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 

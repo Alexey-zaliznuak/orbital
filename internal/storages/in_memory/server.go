@@ -63,8 +63,6 @@ func (s *Server) setupRouter() *chi.Mux {
 
 		r.Route("/messages", func(r chi.Router) {
 			r.Post("/", s.store)
-			r.Get("/ready", s.fetchReady)
-			r.Post("/acknowledge", s.acknowledge)
 			r.Get("/count", s.count)
 			r.Get("/{id}", s.getByID)
 		})

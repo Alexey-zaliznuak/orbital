@@ -62,16 +62,7 @@ type MessageStorage interface {
 	// -- Required methods --
 	Store(ctx context.Context, msg *message.Message) error
 
-	FetchReady(ctx context.Context, limit int) ([]*message.Message, error)
-
-	Acknowledge(ctx context.Context, msgID []string) error
-
 	HealthCheck(ctx context.Context) (StorageHealth, error)
-
-	Connect(ctx context.Context) error
-
-	CloseConnection(ctx context.Context) error
-
 	// -- Optional methods --
 	GetByID(ctx context.Context, msgID string) (*message.Message, error)
 	Count(ctx context.Context) (int64, error)
