@@ -10,12 +10,12 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/Alexey-zaliznuak/orbital/internal/coordinator/storage/etcd"
-	coordinatorapi "github.com/Alexey-zaliznuak/orbital/pkg/coordinator/api"
+	"github.com/Alexey-zaliznuak/orbital/pkg/coordinator/api"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/coordinator"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/node"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/pusher"
-	routingrule "github.com/Alexey-zaliznuak/orbital/pkg/entities/routing_rule"
+	"github.com/Alexey-zaliznuak/orbital/pkg/entities/routing_rule"
 	"github.com/Alexey-zaliznuak/orbital/pkg/entities/storage"
 )
 
@@ -352,14 +352,13 @@ func (s *Server) unregisterGateway(w http.ResponseWriter, r *http.Request) {
 
 // registerStorage godoc
 // @Summary		Зарегистрировать Storage
-// @Description	Регистрирует новый Storage инстанс с диапазоном задержек
+// @Description	Регистрирует новый Storage инстанс с диапазоном задержек. Если storage с таким id уже есть, адрес из запроса добавляется к списку addresses (без дубликатов), обновляются min/max delay и heartbeat.
 // @Tags		Storages
 // @Accept		json
 // @Produce		json
 // @Param		request	body		coordinatorapi.RegisterStorageRequest	true	"Данные Storage"
 // @Success		201		{object}	coordinatorapi.StorageResponse
 // @Failure		400		{object}	coordinatorapi.ErrorResponse
-// @Failure		409		{object}	coordinatorapi.ErrorResponse	"Storage уже существует"
 // @Failure		500		{object}	coordinatorapi.ErrorResponse
 // @Router		/storages [post]
 func (s *Server) registerStorage(w http.ResponseWriter, r *http.Request) {
@@ -392,7 +391,7 @@ func (s *Server) registerStorage(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	st := &storage.Info{
 		ID:            req.ID,
-		Address:       req.Address,
+		Addresses:     []string{req.Address},
 		MinDelay:      minDelay,
 		MaxDelay:      maxDelay,
 		Status:        node.NodeStatusActive,
@@ -401,10 +400,6 @@ func (s *Server) registerStorage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.coordinator.GetStorage().RegisterStorage(r.Context(), st); err != nil {
-		if errors.Is(err, etcd.ErrAlreadyExists) {
-			s.writeError(w, http.StatusConflict, "storage already exists")
-			return
-		}
 		s.writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

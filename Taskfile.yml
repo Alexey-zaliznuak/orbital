@@ -48,10 +48,11 @@ tasks:
       - go run cmd/scripts/send-messages/main.go
 
   swagger:
-    desc: Generate Swagger documentation for coordinator and gateway
+    desc: Generate Swagger documentation for coordinator, gateway and in-memory storage
     cmds:
-      - swag init -g internal/coordinator/http/doc.go -o docs/swagger-coordinator --parseDependency --parseInternal --exclude internal/gateway
-      - swag init -g internal/gateway/http/server.go -o docs/swagger-gateway --parseDependency --parseInternal --exclude internal/coordinator
+      - swag init -g doc.go --dir internal/coordinator/http -o docs/swagger-coordinator --parseDependency
+      - swag init -g server.go --dir internal/gateway/http -o docs/swagger-gateway --parseDependency
+      - swag init -g doc.go --dir internal/storages/in_memory -o docs/swagger-in-memory --parseDependency
 
   infra-up:
     desc: Start only infrastructure (nats, etcd)

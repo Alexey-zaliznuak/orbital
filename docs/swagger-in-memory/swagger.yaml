@@ -1,0 +1,167 @@
+basePath: /api/v1
+definitions:
+  storageapi.CountResponse:
+    properties:
+      count:
+        type: integer
+    type: object
+  storageapi.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  storageapi.MessageResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      payload:
+        items:
+          type: integer
+        type: array
+      routing_key:
+        type: string
+      routing_settings:
+        additionalProperties:
+          type: string
+        type: object
+      scheduled_at:
+        type: string
+    type: object
+  storageapi.StoreMessageRequest:
+    properties:
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      payload:
+        items:
+          type: integer
+        type: array
+      routing_key:
+        type: string
+      routing_settings:
+        additionalProperties:
+          type: string
+        type: object
+      scheduled_at:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API для взаимодействия с in-memory хранилищем сообщений Orbital.
+  title: Orbital In-Memory Storage API
+  version: "1.0"
+paths:
+  /health:
+    get:
+      description: Проверка работоспособности хранилища
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/storageapi.ErrorResponse'
+      summary: Health check
+      tags:
+      - Health
+  /messages:
+    post:
+      consumes:
+      - application/json
+      description: Сохраняет новое сообщение в in-memory хранилище
+      parameters:
+      - description: Данные сообщения
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/storageapi.StoreMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/storageapi.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/storageapi.ErrorResponse'
+        "409":
+          description: Сообщение уже существует
+          schema:
+            $ref: '#/definitions/storageapi.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/storageapi.ErrorResponse'
+      summary: Сохранить сообщение
+      tags:
+      - Messages
+  /messages/{id}:
+    get:
+      description: Возвращает сообщение из хранилища по его идентификатору
+      parameters:
+      - description: Идентификатор сообщения
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storageapi.MessageResponse'
+        "404":
+          description: Сообщение не найдено
+          schema:
+            $ref: '#/definitions/storageapi.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/storageapi.ErrorResponse'
+        "503":
+          description: Хранилище не инициализировано
+          schema:
+            $ref: '#/definitions/storageapi.ErrorResponse'
+      summary: Получить сообщение по ID
+      tags:
+      - Messages
+  /messages/count:
+    get:
+      description: Возвращает общее количество сообщений в хранилище
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storageapi.CountResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/storageapi.ErrorResponse'
+      summary: Количество сообщений
+      tags:
+      - Messages
+swagger: "2.0"
+tags:
+- description: Проверка состояния хранилища
+  name: Health
+- description: Операции с сообщениями
+  name: Messages

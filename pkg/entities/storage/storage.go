@@ -21,12 +21,16 @@ const (
 
 // Info описывает метаданные storage-узла в системе.
 type Info struct {
-	// ID — уникальный человекочитаемый идентификатор хранилища.
+	// ID — уникальный человекочитаемый идентификатор типа хранилища.
 	// Используется как часть NATS subject: orbital.storage.{ID}.
 	// Формат: произвольный, предпочтительно "{tier}-{level}", например "hot-l1", "warm-l1", "cold-l1".
 	// Должен содержать только строчные латинские буквы, цифры и дефис.
-	ID      string
-	Address string
+	ID string
+
+	// Addresses — список HTTP-адресов всех инстансов (воркеров) данного типа хранилища.
+	// Каждый инстанс регистрируется со своим адресом; координатор хранит все адреса.
+	// Повторная регистрация с уже существующим адресом — идемпотентна.
+	Addresses []string
 
 	// DelayRange определяет диапазон задержек сообщений, которые хранит это хранилище.
 	// Сообщение направляется в это хранилище если:
@@ -35,7 +39,7 @@ type Info struct {
 	// Примеры:
 	//   Redis:    MinDelay=0,  MaxDelay=1m   (сообщения с задержкой < 1 мин)
 	//   Postgres: MinDelay=1m, MaxDelay=1h   (от 1 мин до 1 часа)
-	//   Kafka:       MinDelay=1h, MaxDelay=0    (> 1 часа, 0 = бесконечность)
+	//   Kafka:    MinDelay=1h, MaxDelay=0    (> 1 часа, 0 = бесконечность)
 	MinDelay time.Duration
 	MaxDelay time.Duration // 0 означает без верхнего ограничения
 
@@ -60,7 +64,7 @@ type MessageStorage interface {
 	Initialize(ctx context.Context, config any) error
 
 	// -- Required methods --
-	Store(ctx context.Context, msg *message.Message) error
+	Store(ctx context.Context, msgs []*message.Message) error
 
 	HealthCheck(ctx context.Context) (StorageHealth, error)
 	// -- Optional methods --

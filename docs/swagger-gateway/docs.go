@@ -9,15 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "email": "support@orbital.io"
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -37,13 +29,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Конфигурация gateway",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_gateway.GatewayConfig"
+                            "$ref": "#/definitions/gateway.GatewayConfig"
                         }
                     },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "$ref": "#/definitions/internal_gateway_http.ErrorResponse"
+                            "$ref": "#/definitions/gatewayapi.ErrorResponse"
                         }
                     }
                 }
@@ -92,7 +84,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_gateway_http.NewMessageRequest"
+                            "$ref": "#/definitions/gatewayapi.NewMessageRequest"
                         }
                     }
                 ],
@@ -100,19 +92,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Сообщение успешно создано",
                         "schema": {
-                            "$ref": "#/definitions/internal_gateway_http.NewMessageResponse"
+                            "$ref": "#/definitions/gatewayapi.NewMessageResponse"
                         }
                     },
                     "400": {
                         "description": "Некорректный запрос",
                         "schema": {
-                            "$ref": "#/definitions/internal_gateway_http.ErrorResponse"
+                            "$ref": "#/definitions/gatewayapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "$ref": "#/definitions/internal_gateway_http.ErrorResponse"
+                            "$ref": "#/definitions/gatewayapi.ErrorResponse"
                         }
                     }
                 }
@@ -120,7 +112,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_Alexey-zaliznuak_orbital_pkg_entities_gateway.GatewayConfig": {
+        "gateway.GatewayConfig": {
             "type": "object",
             "properties": {
                 "cluster_address": {
@@ -137,19 +129,16 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_gateway_http.ErrorResponse": {
-            "description": "Стандартный ответ при возникновении ошибки.",
+        "gatewayapi.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
-                    "description": "Error содержит описание ошибки.",
                     "type": "string",
                     "example": "invalid request body"
                 }
             }
         },
-        "internal_gateway_http.NewMessageRequest": {
-            "description": "Запрос для отправки сообщения через gateway.",
+        "gatewayapi.NewMessageRequest": {
             "type": "object",
             "required": [
                 "payload",
@@ -186,8 +175,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_gateway_http.NewMessageResponse": {
-            "description": "Ответ с информацией о созданном сообщении.",
+        "gatewayapi.NewMessageResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -230,12 +218,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8081",
-	BasePath:         "/",
-	Schemes:          []string{"http", "https"},
-	Title:            "Orbital Gateway API",
-	Description:      "HTTP API для приёма и маршрутизации сообщений",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
+	Schemes:          []string{},
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

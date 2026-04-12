@@ -1,6 +1,5 @@
-basePath: /
 definitions:
-  github_com_Alexey-zaliznuak_orbital_pkg_entities_gateway.GatewayConfig:
+  gateway.GatewayConfig:
     properties:
       cluster_address:
         type: string
@@ -11,16 +10,13 @@ definitions:
       log_level:
         type: string
     type: object
-  internal_gateway_http.ErrorResponse:
-    description: Стандартный ответ при возникновении ошибки.
+  gatewayapi.ErrorResponse:
     properties:
       error:
-        description: Error содержит описание ошибки.
         example: invalid request body
         type: string
     type: object
-  internal_gateway_http.NewMessageRequest:
-    description: Запрос для отправки сообщения через gateway.
+  gatewayapi.NewMessageRequest:
     properties:
       metadata:
         additionalProperties:
@@ -49,8 +45,7 @@ definitions:
     - payload
     - routing_key
     type: object
-  internal_gateway_http.NewMessageResponse:
-    description: Ответ с информацией о созданном сообщении.
+  gatewayapi.NewMessageResponse:
     properties:
       id:
         description: ID уникальный идентификатор созданного сообщения.
@@ -78,18 +73,8 @@ definitions:
         example: "2024-01-15T10:30:00Z"
         type: string
     type: object
-host: localhost:8081
 info:
-  contact:
-    email: support@orbital.io
-    name: API Support
-  description: HTTP API для приёма и маршрутизации сообщений
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-  termsOfService: http://swagger.io/terms/
-  title: Orbital Gateway API
-  version: "1.0"
+  contact: {}
 paths:
   /api/v1/config:
     get:
@@ -100,11 +85,11 @@ paths:
         "200":
           description: Конфигурация gateway
           schema:
-            $ref: '#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_gateway.GatewayConfig'
+            $ref: '#/definitions/gateway.GatewayConfig'
         "500":
           description: Внутренняя ошибка сервера
           schema:
-            $ref: '#/definitions/internal_gateway_http.ErrorResponse'
+            $ref: '#/definitions/gatewayapi.ErrorResponse'
       summary: Получить конфигурацию gateway
       tags:
       - Config
@@ -134,26 +119,23 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_gateway_http.NewMessageRequest'
+          $ref: '#/definitions/gatewayapi.NewMessageRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Сообщение успешно создано
           schema:
-            $ref: '#/definitions/internal_gateway_http.NewMessageResponse'
+            $ref: '#/definitions/gatewayapi.NewMessageResponse'
         "400":
           description: Некорректный запрос
           schema:
-            $ref: '#/definitions/internal_gateway_http.ErrorResponse'
+            $ref: '#/definitions/gatewayapi.ErrorResponse'
         "500":
           description: Внутренняя ошибка сервера
           schema:
-            $ref: '#/definitions/internal_gateway_http.ErrorResponse'
+            $ref: '#/definitions/gatewayapi.ErrorResponse'
       summary: Отправить сообщение
       tags:
       - Messages
-schemes:
-- http
-- https
 swagger: "2.0"

@@ -49,6 +49,11 @@ func (b *InMemoryStorageConfigBuilder) WithMaxDelay(d time.Duration) *InMemorySt
 	return b
 }
 
+func (b *InMemoryStorageConfigBuilder) WithFetchInterval(d time.Duration) *InMemoryStorageConfigBuilder {
+	b.cfg.FetchInterval = d
+	return b
+}
+
 func (b *InMemoryStorageConfigBuilder) WithFindExpiredInterval(d time.Duration) *InMemoryStorageConfigBuilder {
 	b.cfg.FindExpiredInterval = d
 	return b

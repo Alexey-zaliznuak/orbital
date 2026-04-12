@@ -75,13 +75,13 @@ type RegisterStorageRequest struct {
 }
 
 type StorageResponse struct {
-	ID            string `json:"id"`
-	Address       string `json:"address"`
-	MinDelay      string `json:"min_delay"`
-	MaxDelay      string `json:"max_delay"`
-	Status        string `json:"status"`
-	RegisteredAt  string `json:"registered_at"`
-	LastHeartbeat string `json:"last_heartbeat"`
+	ID            string   `json:"id"`
+	Addresses     []string `json:"addresses"`
+	MinDelay      string   `json:"min_delay"`
+	MaxDelay      string   `json:"max_delay"`
+	Status        string   `json:"status"`
+	RegisteredAt  string   `json:"registered_at"`
+	LastHeartbeat string   `json:"last_heartbeat"`
 }
 
 func StorageToResponse(s *storage.Info) StorageResponse {
@@ -91,7 +91,7 @@ func StorageToResponse(s *storage.Info) StorageResponse {
 	}
 	return StorageResponse{
 		ID:            s.ID,
-		Address:       s.Address,
+		Addresses:     s.Addresses,
 		MinDelay:      s.MinDelay.String(),
 		MaxDelay:      maxDelay,
 		Status:        s.Status.String(),
@@ -125,7 +125,7 @@ func ParseStorageResponse(r *StorageResponse) (*storage.Info, error) {
 
 	return &storage.Info{
 		ID:            r.ID,
-		Address:       r.Address,
+		Addresses:     r.Addresses,
 		MinDelay:      minDelay,
 		MaxDelay:      maxDelay,
 		Status:        status,

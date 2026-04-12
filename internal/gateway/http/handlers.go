@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	gatewayapi "github.com/Alexey-zaliznuak/orbital/pkg/sdk/gateway/api"
+	"github.com/Alexey-zaliznuak/orbital/pkg/sdk/gateway/api"
 
 	// Используется в swagger-аннотациях.
 	_ "github.com/Alexey-zaliznuak/orbital/pkg/entities/gateway"
 )
+
 
 // healthCheck godoc
 // @Summary		Проверка здоровья сервиса
@@ -44,7 +45,7 @@ func (s *Server) decodeJSON(r *http.Request, v any) error {
 // @Tags		Config
 // @Produce		json
 // @Success		200	{object}	gateway.GatewayConfig	"Конфигурация gateway"
-// @Failure		500	{object}	ErrorResponse			"Внутренняя ошибка сервера"
+// @Failure		500	{object}	gatewayapi.ErrorResponse			"Внутренняя ошибка сервера"
 // @Router		/api/v1/config [get]
 func (s *Server) getGatewayConfig(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, s.gateway.GetConfig())
@@ -56,10 +57,10 @@ func (s *Server) getGatewayConfig(w http.ResponseWriter, r *http.Request) {
 // @Tags		Messages
 // @Accept		json
 // @Produce		json
-// @Param		request	body		NewMessageRequest	true	"Данные сообщения"
-// @Success		201		{object}	NewMessageResponse	"Сообщение успешно создано"
-// @Failure		400		{object}	ErrorResponse		"Некорректный запрос"
-// @Failure		500		{object}	ErrorResponse		"Внутренняя ошибка сервера"
+// @Param		request	body		gatewayapi.NewMessageRequest	true	"Данные сообщения"
+// @Success		201		{object}	gatewayapi.NewMessageResponse	"Сообщение успешно создано"
+// @Failure		400		{object}	gatewayapi.ErrorResponse		"Некорректный запрос"
+// @Failure		500		{object}	gatewayapi.ErrorResponse		"Внутренняя ошибка сервера"
 // @Router		/api/v1/message [post]
 func (s *Server) consumeMessage(w http.ResponseWriter, r *http.Request) {
 	var req gatewayapi.NewMessageRequest

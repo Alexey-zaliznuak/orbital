@@ -1,11 +1,11 @@
 basePath: /api/v1
 definitions:
-  github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig:
+  coordinator.ClusterConfig:
     properties:
       nats_address:
         type: string
     type: object
-  github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig:
+  coordinator.CoordinatorConfig:
     properties:
       etcdDialTimeout:
         $ref: '#/definitions/time.Duration'
@@ -27,12 +27,12 @@ definitions:
         description: Логирование
         type: string
     type: object
-  internal_coordinator_http.CreateNodeRequest:
+  coordinatorapi.CreateNodeRequest:
     properties:
       address:
         type: string
     type: object
-  internal_coordinator_http.CreateRoutingRuleRequest:
+  coordinatorapi.CreateRoutingRuleRequest:
     properties:
       enabled:
         type: boolean
@@ -46,12 +46,12 @@ definitions:
       pusher_id:
         type: string
     type: object
-  internal_coordinator_http.ErrorResponse:
+  coordinatorapi.ErrorResponse:
     properties:
       error:
         type: string
     type: object
-  internal_coordinator_http.GatewayResponse:
+  coordinatorapi.GatewayResponse:
     properties:
       address:
         type: string
@@ -64,7 +64,7 @@ definitions:
       status:
         type: string
     type: object
-  internal_coordinator_http.NodeResponse:
+  coordinatorapi.NodeResponse:
     properties:
       address:
         type: string
@@ -77,7 +77,7 @@ definitions:
       status:
         type: string
     type: object
-  internal_coordinator_http.PusherResponse:
+  coordinatorapi.PusherResponse:
     properties:
       address:
         type: string
@@ -92,14 +92,14 @@ definitions:
       type:
         type: string
     type: object
-  internal_coordinator_http.RegisterGatewayRequest:
+  coordinatorapi.RegisterGatewayRequest:
     properties:
       address:
         type: string
       id:
         type: string
     type: object
-  internal_coordinator_http.RegisterPusherRequest:
+  coordinatorapi.RegisterPusherRequest:
     properties:
       address:
         type: string
@@ -109,7 +109,7 @@ definitions:
         description: '"http", "kafka", "grpc", "nats"'
         type: string
     type: object
-  internal_coordinator_http.RegisterStorageRequest:
+  coordinatorapi.RegisterStorageRequest:
     properties:
       address:
         type: string
@@ -122,7 +122,7 @@ definitions:
         description: e.g. "0s", "1m", "1h"
         type: string
     type: object
-  internal_coordinator_http.RoutingRuleResponse:
+  coordinatorapi.RoutingRuleResponse:
     properties:
       enabled:
         type: boolean
@@ -135,10 +135,12 @@ definitions:
       pusher_id:
         type: string
     type: object
-  internal_coordinator_http.StorageResponse:
+  coordinatorapi.StorageResponse:
     properties:
-      address:
-        type: string
+      addresses:
+        items:
+          type: string
+        type: array
       id:
         type: string
       last_heartbeat:
@@ -154,8 +156,6 @@ definitions:
     type: object
   time.Duration:
     enum:
-    - -9223372036854775808
-    - 9223372036854775807
     - 1
     - 1000
     - 1000000
@@ -165,15 +165,12 @@ definitions:
     format: int64
     type: integer
     x-enum-varnames:
-    - minDuration
-    - maxDuration
     - Nanosecond
     - Microsecond
     - Millisecond
     - Second
     - Minute
     - Hour
-host: localhost:8080
 info:
   contact: {}
   description: 'API для управления кластером Orbital: регистрация компонентов, правила
@@ -190,11 +187,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig'
+            $ref: '#/definitions/coordinator.ClusterConfig'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Получить конфигурацию
       tags:
       - coordinator.ClusterConfig
@@ -207,11 +204,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig'
+            $ref: '#/definitions/coordinator.CoordinatorConfig'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Получить конфигурацию
       tags:
       - coordinator.CoordinatorConfig
@@ -225,12 +222,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_coordinator_http.GatewayResponse'
+              $ref: '#/definitions/coordinatorapi.GatewayResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Список Gateways
       tags:
       - Gateways
@@ -244,26 +241,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_coordinator_http.RegisterGatewayRequest'
+          $ref: '#/definitions/coordinatorapi.RegisterGatewayRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_coordinator_http.GatewayResponse'
+            $ref: '#/definitions/coordinatorapi.GatewayResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "409":
           description: Gateway уже существует
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Зарегистрировать Gateway
       tags:
       - Gateways
@@ -282,11 +279,11 @@ paths:
         "404":
           description: Gateway не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Удалить Gateway
       tags:
       - Gateways
@@ -304,15 +301,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_coordinator_http.GatewayResponse'
+            $ref: '#/definitions/coordinatorapi.GatewayResponse'
         "404":
           description: Gateway не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Получить Gateway по ID
       tags:
       - Gateways
@@ -331,11 +328,11 @@ paths:
         "404":
           description: Gateway не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Обновить heartbeat Gateway
       tags:
       - Gateways
@@ -364,12 +361,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_coordinator_http.NodeResponse'
+              $ref: '#/definitions/coordinatorapi.NodeResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Список нод
       tags:
       - Nodes
@@ -383,26 +380,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_coordinator_http.CreateNodeRequest'
+          $ref: '#/definitions/coordinatorapi.CreateNodeRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_coordinator_http.NodeResponse'
+            $ref: '#/definitions/coordinatorapi.NodeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "409":
           description: Нода уже существует
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Создать ноду координатора
       tags:
       - Nodes
@@ -421,15 +418,15 @@ paths:
         "400":
           description: Невалидный ID
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "404":
           description: Нода не найдена
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Удалить ноду
       tags:
       - Nodes
@@ -447,19 +444,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_coordinator_http.NodeResponse'
+            $ref: '#/definitions/coordinatorapi.NodeResponse'
         "400":
           description: Невалидный ID
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "404":
           description: Нода не найдена
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Получить ноду по ID
       tags:
       - Nodes
@@ -478,15 +475,15 @@ paths:
         "400":
           description: Невалидный ID
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "404":
           description: Нода не найдена
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Обновить heartbeat ноды
       tags:
       - Nodes
@@ -500,12 +497,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_coordinator_http.PusherResponse'
+              $ref: '#/definitions/coordinatorapi.PusherResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Список Pushers
       tags:
       - Pushers
@@ -519,26 +516,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_coordinator_http.RegisterPusherRequest'
+          $ref: '#/definitions/coordinatorapi.RegisterPusherRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_coordinator_http.PusherResponse'
+            $ref: '#/definitions/coordinatorapi.PusherResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "409":
           description: Pusher уже существует
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Зарегистрировать Pusher
       tags:
       - Pushers
@@ -557,11 +554,11 @@ paths:
         "404":
           description: Pusher не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Удалить Pusher
       tags:
       - Pushers
@@ -579,15 +576,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_coordinator_http.PusherResponse'
+            $ref: '#/definitions/coordinatorapi.PusherResponse'
         "404":
           description: Pusher не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Получить Pusher по ID
       tags:
       - Pushers
@@ -606,11 +603,11 @@ paths:
         "404":
           description: Pusher не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Обновить heartbeat Pusher
       tags:
       - Pushers
@@ -624,12 +621,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_coordinator_http.RoutingRuleResponse'
+              $ref: '#/definitions/coordinatorapi.RoutingRuleResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Список правил маршрутизации
       tags:
       - RoutingRules
@@ -643,26 +640,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_coordinator_http.CreateRoutingRuleRequest'
+          $ref: '#/definitions/coordinatorapi.CreateRoutingRuleRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_coordinator_http.RoutingRuleResponse'
+            $ref: '#/definitions/coordinatorapi.RoutingRuleResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "409":
           description: Правило уже существует
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Создать правило маршрутизации
       tags:
       - RoutingRules
@@ -681,11 +678,11 @@ paths:
         "404":
           description: Правило не найдено
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Удалить правило маршрутизации
       tags:
       - RoutingRules
@@ -703,15 +700,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_coordinator_http.RoutingRuleResponse'
+            $ref: '#/definitions/coordinatorapi.RoutingRuleResponse'
         "404":
           description: Правило не найдено
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Получить правило по ID
       tags:
       - RoutingRules
@@ -730,26 +727,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_coordinator_http.CreateRoutingRuleRequest'
+          $ref: '#/definitions/coordinatorapi.CreateRoutingRuleRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_coordinator_http.RoutingRuleResponse'
+            $ref: '#/definitions/coordinatorapi.RoutingRuleResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "404":
           description: Правило не найдено
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Обновить правило маршрутизации
       tags:
       - RoutingRules
@@ -763,45 +760,43 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_coordinator_http.StorageResponse'
+              $ref: '#/definitions/coordinatorapi.StorageResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Список Storages
       tags:
       - Storages
     post:
       consumes:
       - application/json
-      description: Регистрирует новый Storage инстанс с диапазоном задержек
+      description: Регистрирует новый Storage инстанс с диапазоном задержек. Если
+        storage с таким id уже есть, адрес из запроса добавляется к списку addresses
+        (без дубликатов), обновляются min/max delay и heartbeat.
       parameters:
       - description: Данные Storage
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_coordinator_http.RegisterStorageRequest'
+          $ref: '#/definitions/coordinatorapi.RegisterStorageRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_coordinator_http.StorageResponse'
+            $ref: '#/definitions/coordinatorapi.StorageResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
-        "409":
-          description: Storage уже существует
-          schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Зарегистрировать Storage
       tags:
       - Storages
@@ -820,11 +815,11 @@ paths:
         "404":
           description: Storage не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Удалить Storage
       tags:
       - Storages
@@ -842,15 +837,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_coordinator_http.StorageResponse'
+            $ref: '#/definitions/coordinatorapi.StorageResponse'
         "404":
           description: Storage не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Получить Storage по ID
       tags:
       - Storages
@@ -869,11 +864,11 @@ paths:
         "404":
           description: Storage не найден
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_coordinator_http.ErrorResponse'
+            $ref: '#/definitions/coordinatorapi.ErrorResponse'
       summary: Обновить heartbeat Storage
       tags:
       - Storages

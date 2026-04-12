@@ -4,7 +4,6 @@
 //	@version		1.0
 //	@description	API для управления кластером Orbital: регистрация компонентов, правила маршрутизации, конфигурация.
 //
-//	@host		localhost:8080
 //	@BasePath	/api/v1
 //
 //	@tag.name			Nodes

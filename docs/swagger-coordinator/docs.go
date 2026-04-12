@@ -29,13 +29,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig"
+                            "$ref": "#/definitions/coordinator.ClusterConfig"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -55,13 +55,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig"
+                            "$ref": "#/definitions/coordinator.CoordinatorConfig"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -83,14 +83,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/internal_coordinator_http.GatewayResponse"
+                                "$ref": "#/definitions/coordinatorapi.GatewayResponse"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -114,7 +114,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.RegisterGatewayRequest"
+                            "$ref": "#/definitions/coordinatorapi.RegisterGatewayRequest"
                         }
                     }
                 ],
@@ -122,25 +122,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.GatewayResponse"
+                            "$ref": "#/definitions/coordinatorapi.GatewayResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Gateway уже существует",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -169,19 +169,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.GatewayResponse"
+                            "$ref": "#/definitions/coordinatorapi.GatewayResponse"
                         }
                     },
                     "404": {
                         "description": "Gateway не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -208,13 +208,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Gateway не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -243,13 +243,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Gateway не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -294,14 +294,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/internal_coordinator_http.NodeResponse"
+                                "$ref": "#/definitions/coordinatorapi.NodeResponse"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -325,7 +325,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.CreateNodeRequest"
+                            "$ref": "#/definitions/coordinatorapi.CreateNodeRequest"
                         }
                     }
                 ],
@@ -333,25 +333,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.NodeResponse"
+                            "$ref": "#/definitions/coordinatorapi.NodeResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Нода уже существует",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -380,25 +380,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.NodeResponse"
+                            "$ref": "#/definitions/coordinatorapi.NodeResponse"
                         }
                     },
                     "400": {
                         "description": "Невалидный ID",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Нода не найдена",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -425,19 +425,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Невалидный ID",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Нода не найдена",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -466,19 +466,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Невалидный ID",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Нода не найдена",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -500,14 +500,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/internal_coordinator_http.PusherResponse"
+                                "$ref": "#/definitions/coordinatorapi.PusherResponse"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -531,7 +531,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.RegisterPusherRequest"
+                            "$ref": "#/definitions/coordinatorapi.RegisterPusherRequest"
                         }
                     }
                 ],
@@ -539,25 +539,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.PusherResponse"
+                            "$ref": "#/definitions/coordinatorapi.PusherResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Pusher уже существует",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -586,19 +586,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.PusherResponse"
+                            "$ref": "#/definitions/coordinatorapi.PusherResponse"
                         }
                     },
                     "404": {
                         "description": "Pusher не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -625,13 +625,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Pusher не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -660,13 +660,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Pusher не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -688,14 +688,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/internal_coordinator_http.RoutingRuleResponse"
+                                "$ref": "#/definitions/coordinatorapi.RoutingRuleResponse"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -719,7 +719,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.CreateRoutingRuleRequest"
+                            "$ref": "#/definitions/coordinatorapi.CreateRoutingRuleRequest"
                         }
                     }
                 ],
@@ -727,25 +727,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.RoutingRuleResponse"
+                            "$ref": "#/definitions/coordinatorapi.RoutingRuleResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Правило уже существует",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -774,19 +774,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.RoutingRuleResponse"
+                            "$ref": "#/definitions/coordinatorapi.RoutingRuleResponse"
                         }
                     },
                     "404": {
                         "description": "Правило не найдено",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -817,7 +817,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.CreateRoutingRuleRequest"
+                            "$ref": "#/definitions/coordinatorapi.CreateRoutingRuleRequest"
                         }
                     }
                 ],
@@ -825,25 +825,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.RoutingRuleResponse"
+                            "$ref": "#/definitions/coordinatorapi.RoutingRuleResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Правило не найдено",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -870,13 +870,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Правило не найдено",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -898,20 +898,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/internal_coordinator_http.StorageResponse"
+                                "$ref": "#/definitions/coordinatorapi.StorageResponse"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Регистрирует новый Storage инстанс с диапазоном задержек",
+                "description": "Регистрирует новый Storage инстанс с диапазоном задержек. Если storage с таким id уже есть, адрес из запроса добавляется к списку addresses (без дубликатов), обновляются min/max delay и heartbeat.",
                 "consumes": [
                     "application/json"
                 ],
@@ -929,7 +929,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.RegisterStorageRequest"
+                            "$ref": "#/definitions/coordinatorapi.RegisterStorageRequest"
                         }
                     }
                 ],
@@ -937,25 +937,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.StorageResponse"
+                            "$ref": "#/definitions/coordinatorapi.StorageResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Storage уже существует",
-                        "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -984,19 +978,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.StorageResponse"
+                            "$ref": "#/definitions/coordinatorapi.StorageResponse"
                         }
                     },
                     "404": {
                         "description": "Storage не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -1023,13 +1017,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Storage не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -1058,13 +1052,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Storage не найден",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_coordinator_http.ErrorResponse"
+                            "$ref": "#/definitions/coordinatorapi.ErrorResponse"
                         }
                     }
                 }
@@ -1072,7 +1066,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.ClusterConfig": {
+        "coordinator.ClusterConfig": {
             "type": "object",
             "properties": {
                 "nats_address": {
@@ -1080,7 +1074,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Alexey-zaliznuak_orbital_pkg_entities_coordinator.CoordinatorConfig": {
+        "coordinator.CoordinatorConfig": {
             "type": "object",
             "properties": {
                 "etcdDialTimeout": {
@@ -1112,7 +1106,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.CreateNodeRequest": {
+        "coordinatorapi.CreateNodeRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1120,7 +1114,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.CreateRoutingRuleRequest": {
+        "coordinatorapi.CreateRoutingRuleRequest": {
             "type": "object",
             "properties": {
                 "enabled": {
@@ -1141,7 +1135,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.ErrorResponse": {
+        "coordinatorapi.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -1149,7 +1143,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.GatewayResponse": {
+        "coordinatorapi.GatewayResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1169,7 +1163,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.NodeResponse": {
+        "coordinatorapi.NodeResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1189,7 +1183,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.PusherResponse": {
+        "coordinatorapi.PusherResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1212,7 +1206,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.RegisterGatewayRequest": {
+        "coordinatorapi.RegisterGatewayRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1223,7 +1217,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.RegisterPusherRequest": {
+        "coordinatorapi.RegisterPusherRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1238,7 +1232,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.RegisterStorageRequest": {
+        "coordinatorapi.RegisterStorageRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1257,7 +1251,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.RoutingRuleResponse": {
+        "coordinatorapi.RoutingRuleResponse": {
             "type": "object",
             "properties": {
                 "enabled": {
@@ -1277,11 +1271,14 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_coordinator_http.StorageResponse": {
+        "coordinatorapi.StorageResponse": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
+                "addresses": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "id": {
                     "type": "string"
@@ -1307,8 +1304,6 @@ const docTemplate = `{
             "type": "integer",
             "format": "int64",
             "enum": [
-                -9223372036854775808,
-                9223372036854775807,
                 1,
                 1000,
                 1000000,
@@ -1317,8 +1312,6 @@ const docTemplate = `{
                 3600000000000
             ],
             "x-enum-varnames": [
-                "minDuration",
-                "maxDuration",
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",
@@ -1359,7 +1352,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Orbital Coordinator API",

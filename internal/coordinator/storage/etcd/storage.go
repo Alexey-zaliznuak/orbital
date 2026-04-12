@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -346,11 +347,71 @@ func (s *Storage) RegisterStorage(ctx context.Context, st *storage.Info) error {
 		return fmt.Errorf("failed to register storage: %w", err)
 	}
 
-	if !txnResp.Succeeded {
-		return ErrAlreadyExists
+	if txnResp.Succeeded {
+		return nil
 	}
 
-	return nil
+	// Запись с таким ID уже есть: добавляем адрес к списку (без дубликатов),
+	// обновляем задержки и heartbeat — см. storage.Info.
+	for {
+		resp, err := s.client.Get(ctx, key)
+		if err != nil {
+			return fmt.Errorf("failed to get storage for merge: %w", err)
+		}
+		if len(resp.Kvs) == 0 {
+			data, err = json.Marshal(st)
+			if err != nil {
+				return fmt.Errorf("failed to marshal storage: %w", err)
+			}
+			txnResp, err = s.client.Txn(ctx).
+				If(clientv3.Compare(clientv3.Version(key), "=", 0)).
+				Then(clientv3.OpPut(key, string(data))).
+				Commit()
+			if err != nil {
+				return fmt.Errorf("failed to register storage: %w", err)
+			}
+			if txnResp.Succeeded {
+				return nil
+			}
+			continue
+		}
+
+		kv := resp.Kvs[0]
+		var existing storage.Info
+		if err := json.Unmarshal(kv.Value, &existing); err != nil {
+			return fmt.Errorf("failed to unmarshal storage: %w", err)
+		}
+
+		mergeStorageRegistration(&existing, st)
+		mergedData, err := json.Marshal(&existing)
+		if err != nil {
+			return fmt.Errorf("failed to marshal storage: %w", err)
+		}
+
+		txnResp, err = s.client.Txn(ctx).
+			If(clientv3.Compare(clientv3.ModRevision(key), "=", kv.ModRevision)).
+			Then(clientv3.OpPut(key, string(mergedData))).
+			Commit()
+		if err != nil {
+			return fmt.Errorf("failed to merge storage registration: %w", err)
+		}
+		if txnResp.Succeeded {
+			*st = existing
+			return nil
+		}
+	}
+}
+
+func mergeStorageRegistration(dst *storage.Info, incoming *storage.Info) {
+	for _, addr := range incoming.Addresses {
+		if !slices.Contains(dst.Addresses, addr) {
+			dst.Addresses = append(dst.Addresses, addr)
+		}
+	}
+	dst.MinDelay = incoming.MinDelay
+	dst.MaxDelay = incoming.MaxDelay
+	dst.LastHeartbeat = incoming.LastHeartbeat
+	dst.Status = node.NodeStatusActive
 }
 
 func (s *Storage) GetStorage(ctx context.Context, storageID string) (*storage.Info, error) {

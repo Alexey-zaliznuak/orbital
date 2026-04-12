@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	_ "github.com/Alexey-zaliznuak/orbital/docs/swagger-in-memory" // Swagger docs
 	inmemory "github.com/Alexey-zaliznuak/orbital/internal/storages/in_memory"
 	"github.com/Alexey-zaliznuak/orbital/pkg/httputil"
 )
@@ -16,7 +17,7 @@ func main() {
 
 	log.Printf("Starting in-memory storage server...")
 	log.Printf("Storage ID: %s", cfg.ID)
-	log.Printf("HTTP addr: %s", cfg.Address)
+	log.Printf("HTTP port: 8080")
 
 	store := inmemory.NewInMemoryStorage()
 
@@ -25,12 +26,12 @@ func main() {
 	}
 
 	server := inmemory.NewServer(store, inmemory.ServerConfig{
-		Addr:         cfg.Address,
+		Addr:         ":8080",
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	})
 
-	log.Printf("HTTP server listening on %s", cfg.Address)
+	log.Printf("HTTP server listening on :8080")
 	httputil.Run(server, 10*time.Second)
 	log.Printf("In-memory storage stopped")
 }

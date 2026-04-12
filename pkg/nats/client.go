@@ -83,6 +83,11 @@ func (c *Client) Publish(subject string, data []byte) error {
 	return nil
 }
 
+func (c *Client) Subscribe(subject string, handler nats.MsgHandler) (*nats.Subscription, error) {
+	logger.Log.Info("Subject subscribed", zap.String("subject", subject), zap.String("client", c.conn.Opts.Name))
+	return c.js.Subscribe(subject, handler)
+}
+
 // Close закрывает соединение с NATS.
 func (c *Client) Close() {
 	if c.conn != nil {

@@ -16,6 +16,7 @@ import (
 	"github.com/Alexey-zaliznuak/orbital/pkg/logger"
 	natsclient "github.com/Alexey-zaliznuak/orbital/pkg/nats"
 	"github.com/Alexey-zaliznuak/orbital/pkg/sdk/coordinator"
+	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
@@ -118,6 +119,8 @@ func (s *InMemoryStorage) initialize(ctx context.Context, rawConfig any) error {
 	findExpiredTicker := time.NewTicker(cfg.FindExpiredInterval)
 	sendExpiredTicker := time.NewTicker(cfg.SendExpiredInterval)
 
+	s.busClient.NewHandlerOnStorageMessages(cfg.ID, s.HandleNewMessages)
+
 	go func() {
 		defer findExpiredTicker.Stop()
 		defer sendExpiredTicker.Stop()
@@ -167,7 +170,7 @@ func (s *InMemoryStorage) HealthCheck(_ context.Context) (storage.StorageHealth,
 	return storage.StorageHealthOK, nil
 }
 
-func (s *InMemoryStorage) Store(_ context.Context, msg *message.Message) error {
+func (s *InMemoryStorage) Store(_ context.Context, msgs []*message.Message) error {
 	if err := s.checkReady(); err != nil {
 		return err
 	}
@@ -175,18 +178,33 @@ func (s *InMemoryStorage) Store(_ context.Context, msg *message.Message) error {
 	s.messagesMu.Lock()
 	defer s.messagesMu.Unlock()
 
-	copied := *msg
-	if copied.ID == "" {
-		copied.ID = message.GenerateID()
-	}
+	for _, msg := range msgs {
+		copied := *msg
+		if copied.ID == "" {
+			copied.ID = message.GenerateID()
+		}
 
-	if _, exists := s.messages[copied.ID]; exists {
-		return fmt.Errorf("%w: %s", ErrAlreadyExists, copied.ID)
-	}
+		if _, exists := s.messages[copied.ID]; exists {
+			return fmt.Errorf("%w: %s", ErrAlreadyExists, copied.ID)
+		}
 
-	s.messages[copied.ID] = &copied
+		s.messages[copied.ID] = &copied
+	}
 
 	return nil
+}
+
+func (s *InMemoryStorage) HandleNewMessages(msg *nats.Msg) {
+	msgs := make([]*message.Message, 0)
+
+	if err := json.Unmarshal(msg.Data, &msgs); err != nil {
+		logger.Log.Error("Received messages unmarshal error", zap.Error(err))
+		return
+	}
+
+	if err := s.Store(context.Background(), msgs); err != nil {
+		logger.Log.Error("Failed to store messages", zap.Error(err))
+	}
 }
 
 func (s *InMemoryStorage) processMessages(ctx context.Context) error {
